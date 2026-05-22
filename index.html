@@ -1,0 +1,928 @@
+<!--
+  ============================================================
+  카페 데니스의 원두 노트 로그 — 외부 배포용 독립 HTML
+  GitHub Pages + Firebase Realtime Database
+
+  ▣ 사용 전 반드시 할 일 (아래 [STEP 1] 참고)
+    1) Firebase 프로젝트 생성 → Realtime Database 만들기
+    2) 발급받은 설정값을 아래 FIREBASE_CONFIG 에 붙여넣기
+    3) 이 파일을 index.html 로 GitHub 저장소에 업로드
+    4) 저장소 Settings > Pages 에서 배포
+
+  ▣ 관리자 비밀번호: 아래 ADMIN_PW 값(기본 "dennis")
+  ============================================================
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>카페 데니스의 원두 노트 로그</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+  :root{
+    --black:#121113; --panel:#1b191a; --panel2:#232021; --border:#35302d;
+    --ink:#f4f1ea; --sub:#a8a29a; --metal:#bcbfc3; --metalDark:#6f7276;
+    --walnut:#6b4a32; --walnutLt:#9a6f4d; --amber:#cf954f; --danger:#c0524e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--black);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    -webkit-text-size-adjust:100%;}
+  .wrap{max-width:980px;margin:0 auto;padding:16px;}
+  @media(min-width:640px){.wrap{padding:24px;}}
+  button{font-family:inherit;cursor:pointer;border:none;}
+  input,select,textarea{font-family:inherit;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;}
+  h2.sec{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;}
+  .muted{color:var(--metalDark);font-size:11px;}
+  .hidden{display:none!important;}
+  /* 헤더 */
+  header{background:linear-gradient(135deg,#232021,#161415);border:1px solid var(--border);
+    border-radius:18px;padding:20px;margin-bottom:20px;}
+  .hdrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .logo{background:var(--walnut);border-radius:12px;width:48px;height:48px;
+    display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.4px;}
+  @media(min-width:640px){h1{font-size:24px;}}
+  /* 탭 */
+  .tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .tab{padding:8px 16px;border-radius:9px;font-size:13px;font-weight:700;
+    background:var(--panel);color:var(--sub);border:1px solid var(--border);
+    display:flex;align-items:center;gap:6px;}
+  .tab.on{background:var(--walnut);color:var(--ink);border-color:var(--walnutLt);}
+  /* 통계 */
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+  @media(min-width:880px){.stats{grid-template-columns:repeat(4,1fr);}}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .stat .lbl{color:var(--metalDark);font-size:12px;}
+  .stat .val{font-size:24px;font-weight:800;margin-top:4px;}
+  .stat .sub{color:var(--sub);font-size:12px;}
+  /* 차트 */
+  .barrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .barlabel{width:130px;font-size:11px;color:var(--sub);text-align:right;flex-shrink:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bartrack{flex:1;background:var(--panel2);border-radius:6px;height:18px;overflow:hidden;}
+  .barfill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;
+    padding-right:6px;font-size:10px;font-weight:700;color:var(--black);min-width:24px;}
+  /* 정렬 */
+  .sortbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .chip{font-size:12px;padding:5px 10px;border-radius:7px;font-weight:600;
+    background:var(--panel2);color:var(--sub);border:1px solid var(--border);}
+  .chip.on{background:var(--walnut);color:var(--ink);border-color:var(--walnutLt);}
+  select.sel{font-size:12px;padding:5px 8px;border-radius:7px;background:var(--panel2);
+    color:var(--ink);border:1px solid var(--border);outline:none;}
+  /* 원두 카드 */
+  .beans{display:grid;grid-template-columns:1fr;gap:12px;padding-bottom:32px;}
+  @media(min-width:640px){.beans{grid-template-columns:repeat(2,1fr);}}
+  .bean{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
+    display:flex;flex-direction:column;gap:10px;}
+  .bean .brand{font-size:11px;font-weight:700;color:var(--metalDark);letter-spacing:.3px;}
+  .bean .bname{font-size:16px;font-weight:800;line-height:1.2;}
+  .brandrow{display:flex;align-items:center;gap:8px;}
+  .blogo{width:34px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0;
+    background:var(--panel2);border:1px solid var(--border);}
+  .blogo.ph{display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--metalDark);}
+  /* 로고 관리 */
+  .logorow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;
+    background:var(--panel2);border:1px solid var(--border);margin-bottom:8px;}
+  .logobig{width:48px;height:48px;border-radius:9px;object-fit:cover;flex-shrink:0;
+    background:var(--panel);border:1px solid var(--border);}
+  .logobig.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--metalDark);}
+  .procpill{font-size:11px;padding:4px 8px;border-radius:6px;background:var(--panel2);
+    color:var(--metal);border:1px solid var(--border);white-space:nowrap;}
+  .origin{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);}
+  .notetags{display:flex;flex-wrap:wrap;gap:6px;}
+  .ntag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+  .subnote{font-size:12px;color:var(--metalDark);}
+  .beanfoot{display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--border);padding-top:10px;margin-top:2px;}
+  .price{font-size:15px;font-weight:800;color:var(--amber);}
+  .votebtn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9px;
+    font-size:13px;font-weight:800;background:var(--panel2);color:var(--sub);
+    border:1px solid var(--border);transition:transform .08s;}
+  .votebtn:active{transform:scale(.95);}
+  .votebtn.voted{background:var(--walnut);color:#ff8e8e;border-color:var(--walnutLt);}
+  /* 폼 */
+  label.fl{font-size:11px;color:var(--metalDark);display:block;margin-bottom:2px;}
+  input.fi,select.fi,textarea.fi{width:100%;padding:7px 10px;border-radius:7px;font-size:12px;
+    background:var(--panel2);color:var(--ink);border:1px solid var(--border);outline:none;}
+  textarea.fi{resize:vertical;}
+  .grid2{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:640px){.grid2{grid-template-columns:repeat(2,1fr);}}
+  .span2{grid-column:1/-1;}
+  .btn{padding:7px 16px;border-radius:9px;font-size:12px;font-weight:800;
+    background:var(--walnut);color:var(--ink);border:1px solid var(--walnutLt);}
+  .btn.ghost{background:var(--panel2);color:var(--sub);border-color:var(--border);}
+  .btn.amber{background:var(--amber);color:var(--black);border-color:var(--walnutLt);}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .notebtn{font-size:11px;padding:5px 9px;border-radius:999px;font-weight:600;
+    background:var(--panel2);color:var(--metalDark);border:1px solid var(--border);}
+  /* 관리자 목록 */
+  .arow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;border-radius:9px;
+    background:var(--panel2);border:1px solid var(--border);margin-bottom:8px;}
+  .icobtn{width:30px;height:30px;border-radius:7px;background:var(--panel);
+    border:1px solid var(--border);color:var(--metal);font-size:14px;
+    display:flex;align-items:center;justify-content:center;}
+  .stepbtn{width:28px;height:28px;border-radius:6px;background:var(--panel);
+    border:1px solid var(--border);color:var(--sub);font-size:15px;font-weight:800;}
+  .flash{padding:9px 12px;border-radius:9px;font-size:12px;font-weight:700;
+    background:var(--walnut);color:var(--ink);border:1px solid var(--walnutLt);margin-bottom:16px;}
+  .err{color:var(--danger);font-size:11px;margin-top:6px;}
+  .pre{background:var(--panel2);border:1px solid var(--border);border-radius:8px;
+    padding:10px;font-size:11px;color:var(--metal);white-space:pre-wrap;
+    font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.6;}
+  .fbwarn{background:#3a2a1a;border:1px solid var(--amber);border-radius:10px;
+    padding:12px;margin-bottom:16px;font-size:12px;color:var(--amber);}
+  .map{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  svg{display:block;width:100%;height:auto;}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* ============================================================
+   [STEP 1] FIREBASE 설정 — 여기에 본인 값을 붙여넣으세요
+   ------------------------------------------------------------
+   ① https://console.firebase.google.com 접속 → "프로젝트 추가"
+   ② 왼쪽 메뉴 "빌드 > Realtime Database" → "데이터베이스 만들기"
+      - 위치: 아무거나 / 보안 규칙: "테스트 모드로 시작" 선택
+   ③ 프로젝트 설정(톱니바퀴) > "내 앱" > 웹 앱(</>) 추가
+   ④ 표시되는 firebaseConfig 값을 아래에 그대로 복사
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDa8yFGgz2AxNNF86Q1ri_eQu0UqVTnnXc",
+  authDomain: "dennis-beans-log.firebaseapp.com",
+  databaseURL: "https://dennis-beans-log-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dennis-beans-log",
+  storageBucket: "dennis-beans-log.firebasestorage.app",
+  messagingSenderId: "991657342643",
+  appId: "1:991657342643:web:4756afb454cd9b5601e2c6",
+  measurementId: "G-TRJ2DHXE8R"
+};
+
+/* 관리자 비밀번호 — 원하는 값으로 변경하세요 */
+const ADMIN_PW = "dennis";
+
+/* ============================================================
+   기준 데이터
+   ============================================================ */
+const PROCESSES = ["Washed","Natural","Honey","Anaerobic","Wet-hulled","Other"];
+const PROC_LABEL = {
+  Washed:{ko:"워시드(수세식)",en:"Washed",zh:"水洗",th:"วอชด์"},
+  Natural:{ko:"내추럴(건식)",en:"Natural",zh:"日晒",th:"เนเชอรัล"},
+  Honey:{ko:"허니",en:"Honey",zh:"蜜处理",th:"ฮันนี่"},
+  Anaerobic:{ko:"무산소 발효",en:"Anaerobic",zh:"厌氧发酵",th:"แอนแอโรบิก"},
+  "Wet-hulled":{ko:"웻헐드",en:"Wet-hulled",zh:"湿刨",th:"เว็ทฮัลล์"},
+  Other:{ko:"기타",en:"Other",zh:"其他",th:"อื่นๆ"}
+};
+/* 가공법 패턴 매핑(소문자) */
+const PROC_ALIAS = {
+  "washed":"Washed","워시드":"Washed","수세식":"Washed","세척식":"Washed","水洗":"Washed","วอชด์":"Washed",
+  "natural":"Natural","내추럴":"Natural","건식":"Natural","日晒":"Natural","เนเชอรัล":"Natural",
+  "honey":"Honey","허니":"Honey","蜜处理":"Honey","ฮันนี่":"Honey","펄프드내추럴":"Honey",
+  "anaerobic":"Anaerobic","무산소":"Anaerobic","무산소발효":"Anaerobic","애너로빅":"Anaerobic","厌氧发酵":"Anaerobic","แอนแอโรบิก":"Anaerobic",
+  "wet-hulled":"Wet-hulled","wethulled":"Wet-hulled","웻헐드":"Wet-hulled","길링바사":"Wet-hulled","湿刨":"Wet-hulled","เว็ทฮัลล์":"Wet-hulled",
+  "other":"Other","기타":"Other","其他":"Other","อื่นๆ":"Other"
+};
+
+const SCAA = ["Floral","Fruity","Sour/Fermented","Green/Vegetative","Roasted","Spices","Nutty/Cocoa","Sweet","Other"];
+const NOTE_COLOR = {
+  Floral:"#d98ba8",Fruity:"#d96b5c","Sour/Fermented":"#c9a14e","Green/Vegetative":"#6fae6f",
+  Roasted:"#8a5a3c",Spices:"#c97d4e","Nutty/Cocoa":"#9a6f4d",Sweet:"#d9a05c",Other:"#8f9296"
+};
+const NOTE_LABEL = {
+  Floral:{ko:"꽃향",en:"Floral",zh:"花香",th:"ดอกไม้"},
+  Fruity:{ko:"과일향",en:"Fruity",zh:"果香",th:"ผลไม้"},
+  "Sour/Fermented":{ko:"발효·산미",en:"Sour/Fermented",zh:"酸味/发酵",th:"เปรี้ยว/หมัก"},
+  "Green/Vegetative":{ko:"풀·식물",en:"Green/Vegetative",zh:"草本/植物",th:"พืช/สมุนไพร"},
+  Roasted:{ko:"로스팅·탄향",en:"Roasted",zh:"烘焙香",th:"คั่ว"},
+  Spices:{ko:"향신료",en:"Spices",zh:"香料",th:"เครื่องเทศ"},
+  "Nutty/Cocoa":{ko:"견과·카카오",en:"Nutty/Cocoa",zh:"坚果/可可",th:"ถั่ว/โกโก้"},
+  Sweet:{ko:"단맛",en:"Sweet",zh:"甜味",th:"หวาน"},
+  Other:{ko:"기타",en:"Other",zh:"其他",th:"อื่นๆ"}
+};
+/* 노트 패턴 매핑 — 한/영/중/태 + 흔한 향미 키워드 */
+const NOTE_ALIAS = {};
+(function(){
+  const add=(k,v)=>{NOTE_ALIAS[k.toLowerCase()]=v;};
+  Object.keys(NOTE_LABEL).forEach(id=>{
+    Object.values(NOTE_LABEL[id]).forEach(l=>add(l,id));
+    add(id,id);
+  });
+  ["꽃","꽃향","자스민","장미","홍차","floral","jasmine","rose","花","茉莉"].forEach(k=>add(k,"Floral"));
+  ["과일","과일향","베리","감귤","시트러스","복숭아","열대과일","사과","fruity","berry","citrus","peach","果","水果","浆果"].forEach(k=>add(k,"Fruity"));
+  ["발효","산미","와인","wine","fermented","sour","酸"].forEach(k=>add(k,"Sour/Fermented"));
+  ["풀","허브","식물","green","herb","grass","草"].forEach(k=>add(k,"Green/Vegetative"));
+  ["다크초콜릿","탄향","로스팅","구운","담배","roasted","smoky","tobacco","烘焙"].forEach(k=>add(k,"Roasted"));
+  ["향신료","시나몬","후추","정향","spice","spices","cinnamon","pepper","香料"].forEach(k=>add(k,"Spices"));
+  ["견과","견과류","아몬드","카카오","코코아","밀크초콜릿","nutty","nut","cocoa","almond","坚果","可可"].forEach(k=>add(k,"Nutty/Cocoa"));
+  ["단맛","캐러멜","꿀","설탕","바닐라","흑설탕","sweet","caramel","honey","sugar","vanilla","甜","焦糖","蜂蜜"].forEach(k=>add(k,"Sweet"));
+  ["기타","other","其他"].forEach(k=>add(k,"Other"));
+})();
+
+const COUNTRIES = [
+  {id:"에티오피아",lat:8,lon:39,names:{ko:"에티오피아",en:"Ethiopia",zh:"埃塞俄比亚",th:"เอธิโอเปีย"}},
+  {id:"케냐",lat:.5,lon:37.9,names:{ko:"케냐",en:"Kenya",zh:"肯尼亚",th:"เคนยา"}},
+  {id:"콜롬비아",lat:4,lon:-73,names:{ko:"콜롬비아",en:"Colombia",zh:"哥伦比亚",th:"โคลอมเบีย"}},
+  {id:"브라질",lat:-12,lon:-50,names:{ko:"브라질",en:"Brazil",zh:"巴西",th:"บราซิล"}},
+  {id:"과테말라",lat:15.5,lon:-90.2,names:{ko:"과테말라",en:"Guatemala",zh:"危地马拉",th:"กัวเตมาลา"}},
+  {id:"코스타리카",lat:9.9,lon:-84,names:{ko:"코스타리카",en:"Costa Rica",zh:"哥斯达黎加",th:"คอสตาริกา"}},
+  {id:"파나마",lat:8.7,lon:-80.5,names:{ko:"파나마",en:"Panama",zh:"巴拿马",th:"ปานามา"}},
+  {id:"온두라스",lat:14.8,lon:-86.5,names:{ko:"온두라스",en:"Honduras",zh:"洪都拉斯",th:"ฮอนดูรัส"}},
+  {id:"엘살바도르",lat:13.8,lon:-88.9,names:{ko:"엘살바도르",en:"El Salvador",zh:"萨尔瓦多",th:"เอลซัลวาดอร์"}},
+  {id:"니카라과",lat:12.9,lon:-85.2,names:{ko:"니카라과",en:"Nicaragua",zh:"尼加拉瓜",th:"นิการากัว"}},
+  {id:"페루",lat:-10,lon:-75.5,names:{ko:"페루",en:"Peru",zh:"秘鲁",th:"เปรู"}},
+  {id:"르완다",lat:-1.9,lon:29.9,names:{ko:"르완다",en:"Rwanda",zh:"卢旺达",th:"รวันดา"}},
+  {id:"부룬디",lat:-3.4,lon:29.9,names:{ko:"부룬디",en:"Burundi",zh:"布隆迪",th:"บุรุนดี"}},
+  {id:"인도네시아",lat:0,lon:101,names:{ko:"인도네시아",en:"Indonesia",zh:"印度尼西亚",th:"อินโดนีเซีย"}},
+  {id:"예멘",lat:15.5,lon:47.5,names:{ko:"예멘",en:"Yemen",zh:"也门",th:"เยเมน"}},
+  {id:"탄자니아",lat:-6.4,lon:34.9,names:{ko:"탄자니아",en:"Tanzania",zh:"坦桑尼亚",th:"แทนซาเนีย"}},
+  {id:"인도",lat:13,lon:77,names:{ko:"인도",en:"India",zh:"印度",th:"อินเดีย"}},
+  {id:"멕시코",lat:17,lon:-96.5,names:{ko:"멕시코",en:"Mexico",zh:"墨西哥",th:"เม็กซิโก"}},
+  {id:"베트남",lat:13,lon:108,names:{ko:"베트남",en:"Vietnam",zh:"越南",th:"เวียดนาม"}},
+  {id:"볼리비아",lat:-16.3,lon:-66,names:{ko:"볼리비아",en:"Bolivia",zh:"玻利维亚",th:"โบลิเวีย"}},
+  {id:"에콰도르",lat:-1.5,lon:-78.5,names:{ko:"에콰도르",en:"Ecuador",zh:"厄瓜多尔",th:"เอกวาดอร์"}},
+  {id:"우간다",lat:1,lon:32.3,names:{ko:"우간다",en:"Uganda",zh:"乌干达",th:"ยูกันดา"}}
+];
+const C_BY_ID = {}; COUNTRIES.forEach(c=>C_BY_ID[c.id]=c);
+/* 생산지 패턴 매핑 — 다국어 이름 + 지역/농장 키워드 */
+const COUNTRY_ALIAS = {};
+(function(){
+  const add=(k,v)=>{COUNTRY_ALIAS[k.toLowerCase()]=v;};
+  COUNTRIES.forEach(c=>{Object.values(c.names).forEach(n=>add(n,c.id));add(c.id,c.id);});
+  const region={
+    "에티오피아":["예가체프","yirgacheffe","시다모","sidamo","구지","guji","코체레","kochere","하라","harrar","리무","limu"],
+    "콜롬비아":["후일라","huila","나리뇨","narino","안티오키아","톨리마","tolima","우일라"],
+    "케냐":["니에리","nyeri","키암부","kiambu","키리냐가","kirinyaga"],
+    "과테말라":["안티구아","antigua","우에우에테낭고","huehuetenango","아티틀란"],
+    "코스타리카":["타라주","tarrazu","웨스트밸리"],
+    "인도네시아":["수마트라","sumatra","만델링","mandheling","가요","gayo","아체","aceh","자바","java"],
+    "파나마":["보케테","boquete","에스메랄다","esmeralda"],
+    "브라질":["세하도","cerrado","미나스","minas","수페리모"],
+    "예멘":["모카","mocha","matari"],
+    "르완다":["키부","kivu"]
+  };
+  Object.keys(region).forEach(c=>region[c].forEach(k=>add(k,c)));
+})();
+
+const SEED = [
+  {id:"b1",brand:"모모스커피",name:"예가체프 코체레",country:"에티오피아",process:"Washed",notes:["Floral","Fruity"],subnotes:"자스민, 베르가못, 레몬",price:28000,votes:14},
+  {id:"b2",brand:"프릳츠",name:"우일라 수프리모",country:"콜롬비아",process:"Washed",notes:["Sweet","Nutty/Cocoa"],subnotes:"캐러멜, 밀크초콜릿, 견과류",price:24000,votes:9},
+  {id:"b3",brand:"센터커피",name:"케냐 AA 니에리",country:"케냐",process:"Washed",notes:["Fruity","Sour/Fermented"],subnotes:"블랙커런트, 자몽, 토마토",price:32000,votes:11},
+  {id:"b4",brand:"테라로사",name:"세하도 내추럴",country:"브라질",process:"Natural",notes:["Nutty/Cocoa","Sweet"],subnotes:"땅콩, 다크초콜릿, 흑설탕",price:19000,votes:6},
+  {id:"b5",brand:"커피리브레",name:"안티구아 SHB",country:"과테말라",process:"Washed",notes:["Roasted","Spices"],subnotes:"다크초콜릿, 시나몬, 오렌지",price:23000,votes:5},
+  {id:"b6",brand:"커피리브레",name:"수마트라 만델링",country:"인도네시아",process:"Wet-hulled",notes:["Green/Vegetative","Spices"],subnotes:"허브, 시더, 흙내음",price:21000,votes:3},
+  {id:"b7",brand:"180커피로스터스",name:"게이샤 에스메랄다",country:"파나마",process:"Washed",notes:["Floral","Fruity","Sweet"],subnotes:"자스민, 백도, 꿀",price:65000,votes:17}
+];
+
+/* ============================================================
+   다국어 UI 문구
+   ============================================================ */
+const LANGS=[{id:"ko",label:"한국어"},{id:"en",label:"English"},{id:"zh",label:"中文"},{id:"th",label:"ไทย"}];
+const T={
+  ko:{appTitle:"카페 데니스의 원두 노트 로그",appSubtitle:"필터로 사용한 원두 데이터 · 방문자 인기투표 대시보드",
+    tabDash:"대시보드",tabAdmin:"관리자",statBeans:"등록 원두",statVotes:"총 투표",statTop:"인기 1위",statTopProc:"인기 가공법",unitKind:"종",
+    rankTitle:"인기 투표 랭킹",mapTitle:"생산지 지도",mapClear:"필터 해제",
+    mapHint:"점을 누르면 해당 생산지 원두만 볼 수 있어요. 점 크기는 받은 좋아요 수에 비례합니다.",
+    filterLabel:"정렬",sVotes:"인기순",sBrand:"브랜드",sCountry:"생산지",sProcess:"가공법",sPrice:"금액",sNotes:"노트",
+    procAll:"가공법 전체",noBeans:"조건에 맞는 원두가 없습니다.",
+    adminAuth:"관리자 인증",adminPwHint:"비밀번호를 입력하세요",adminEnter:"입장",adminPwWrong:"비밀번호가 올바르지 않습니다",
+    backupTitle:"데이터 백업 / 업로드",backupDesc:"원두·투표 데이터는 Firebase에 저장되어 모든 방문자가 공유합니다. 정기적으로 백업하세요.",
+    btnExport:"백업 (JSON 내보내기)",btnImport:"업로드 (JSON 가져오기)",
+    patTitle:"패턴 입력 — 정형 일괄 등록",
+    patDesc:"한 줄에 원두 하나. 칸은 | 로 구분하며 순서 고정입니다. 여러 줄을 붙여넣으면 한 번에 등록됩니다.\n순서: 브랜드 | 원두명 | 생산지 | 가공법 | 노트 | 세부노트 | 금액\n노트·가공법·생산지는 한/영/중/태 어떤 표기든 자동 매핑됩니다. 노트는 쉼표로 여러 개.",
+    patBtn:"패턴 일괄 등록",patResult:"개 원두를 등록했습니다",patNone:"인식된 원두가 없습니다. 형식을 확인하세요.",
+    formAdd:"원두 추가 / 수정",fBrand:"로스팅 브랜드",fName:"원두명",fCountry:"생산지(나라)",fProcess:"가공법",
+    fNotes:"원두 노트 — SCAA 대분류 (복수 선택)",fSubnotes:"세부 노트",fSubPlaceholder:"예: 자스민, 베르가못, 레몬",fPrice:"금액 (원)",
+    btnAdd:"추가하기",btnSaveEdit:"수정 저장",btnCancel:"취소",listTitle:"원두 목록 · 투표 보정",
+    msgAdded:"추가되었습니다",msgEdited:"수정되었습니다",msgDeleted:"삭제되었습니다",msgExported:"백업 파일을 내려받았습니다",
+    msgImported:"데이터를 불러왔습니다",msgImportFail:"올바른 JSON 파일이 아닙니다",msgNeedName:"브랜드와 원두명을 입력하세요",
+    loading:"불러오는 중…",fbError:"Firebase 설정이 필요합니다. HTML 파일 상단의 FIREBASE_CONFIG 값을 입력하세요. (현재는 임시로 로컬에만 저장됩니다)",
+    connecting:"Firebase 연결 중…",confirmDel:"이 원두를 삭제할까요?",
+    logoTitle:"로스팅 브랜드 로고 관리",
+    logoDesc:"원두에 등록된 브랜드별로 로고(PNG)를 올릴 수 있습니다. 1:1 정사각형 이미지를 권장하며, 자동으로 작게 압축되어 저장됩니다.",
+    logoUpload:"로고 업로드",logoChange:"변경",logoRemove:"삭제",
+    logoNoBrands:"먼저 원두를 등록하면 브랜드 목록이 나타납니다.",
+    logoSaved:"로고가 저장되었습니다",logoRemoved:"로고가 삭제되었습니다",logoErr:"PNG 이미지 파일만 올릴 수 있습니다"},
+  en:{appTitle:"Cafe Dennis's Bean Note Log",appSubtitle:"Filter coffee bean data · Visitor popularity vote dashboard",
+    tabDash:"Dashboard",tabAdmin:"Admin",statBeans:"Beans",statVotes:"Total Votes",statTop:"Top Pick",statTopProc:"Top Process",unitKind:"",
+    rankTitle:"Popularity Ranking",mapTitle:"Origin Map",mapClear:"Clear filter",
+    mapHint:"Tap a dot to see beans from that origin. Dot size reflects total likes.",
+    filterLabel:"Sort",sVotes:"Popular",sBrand:"Brand",sCountry:"Origin",sProcess:"Process",sPrice:"Price",sNotes:"Notes",
+    procAll:"All processes",noBeans:"No beans match the filter.",
+    adminAuth:"Admin Login",adminPwHint:"Enter the password",adminEnter:"Enter",adminPwWrong:"Incorrect password",
+    backupTitle:"Backup / Upload Data",backupDesc:"Bean and vote data is stored in Firebase and shared by all visitors. Back up regularly.",
+    btnExport:"Backup (Export JSON)",btnImport:"Upload (Import JSON)",
+    patTitle:"Pattern Input — Bulk Register",
+    patDesc:"One bean per line. Fields separated by | in fixed order. Paste multiple lines to register at once.\nOrder: Brand | Name | Origin | Process | Notes | Detailed notes | Price\nNotes/process/origin auto-map from KO/EN/ZH/TH. Use commas for multiple notes.",
+    patBtn:"Bulk Register",patResult:" beans registered",patNone:"No beans recognized. Check the format.",
+    formAdd:"Add / Edit Bean",fBrand:"Roasting Brand",fName:"Bean Name",fCountry:"Origin (Country)",fProcess:"Process",
+    fNotes:"Bean Notes — SCAA categories (multi-select)",fSubnotes:"Detailed notes",fSubPlaceholder:"e.g. jasmine, bergamot, lemon",fPrice:"Price (KRW)",
+    btnAdd:"Add",btnSaveEdit:"Save Changes",btnCancel:"Cancel",listTitle:"Bean List · Vote Adjustment",
+    msgAdded:"Added",msgEdited:"Updated",msgDeleted:"Deleted",msgExported:"Backup file downloaded",
+    msgImported:"Data imported",msgImportFail:"Not a valid JSON file",msgNeedName:"Enter brand and bean name",
+    loading:"Loading…",fbError:"Firebase config required. Fill FIREBASE_CONFIG at the top of the HTML file. (Currently saving locally only)",
+    connecting:"Connecting to Firebase…",confirmDel:"Delete this bean?",
+    logoTitle:"Roasting Brand Logo Management",
+    logoDesc:"Upload a logo (PNG) for each brand registered in your beans. 1:1 square images recommended; they are auto-compressed to a small size.",
+    logoUpload:"Upload Logo",logoChange:"Change",logoRemove:"Remove",
+    logoNoBrands:"Register beans first and brand list will appear here.",
+    logoSaved:"Logo saved",logoRemoved:"Logo removed",logoErr:"Only PNG image files are allowed"},
+  zh:{appTitle:"丹尼斯咖啡馆 咖啡豆笔记日志",appSubtitle:"滤泡咖啡豆数据 · 访客人气投票仪表板",
+    tabDash:"仪表板",tabAdmin:"管理员",statBeans:"登记咖啡豆",statVotes:"总投票数",statTop:"人气第一",statTopProc:"热门处理法",unitKind:"种",
+    rankTitle:"人气投票排行",mapTitle:"产地地图",mapClear:"清除筛选",
+    mapHint:"点击圆点可只看该产地的咖啡豆。圆点大小与获赞数成正比。",
+    filterLabel:"排序",sVotes:"人气",sBrand:"品牌",sCountry:"产地",sProcess:"处理法",sPrice:"价格",sNotes:"风味",
+    procAll:"全部处理法",noBeans:"没有符合条件的咖啡豆。",
+    adminAuth:"管理员登录",adminPwHint:"请输入密码",adminEnter:"进入",adminPwWrong:"密码不正确",
+    backupTitle:"数据备份 / 上传",backupDesc:"咖啡豆和投票数据存储在 Firebase，由所有访客共享。请定期备份。",
+    btnExport:"备份（导出 JSON）",btnImport:"上传（导入 JSON）",
+    patTitle:"模式输入 — 批量登记",
+    patDesc:"每行一个咖啡豆。字段用 | 分隔，顺序固定。粘贴多行可一次登记。\n顺序：品牌 | 名称 | 产地 | 处理法 | 风味 | 详细风味 | 价格\n风味/处理法/产地支持中/韩/英/泰自动匹配。多个风味用逗号分隔。",
+    patBtn:"批量登记",patResult:" 个咖啡豆已登记",patNone:"未识别到咖啡豆。请检查格式。",
+    formAdd:"添加 / 编辑咖啡豆",fBrand:"烘焙品牌",fName:"咖啡豆名称",fCountry:"产地（国家）",fProcess:"处理法",
+    fNotes:"咖啡豆风味 — SCAA 大类（可多选）",fSubnotes:"详细风味",fSubPlaceholder:"例：茉莉、佛手柑、柠檬",fPrice:"价格（韩元）",
+    btnAdd:"添加",btnSaveEdit:"保存修改",btnCancel:"取消",listTitle:"咖啡豆列表 · 投票校正",
+    msgAdded:"已添加",msgEdited:"已更新",msgDeleted:"已删除",msgExported:"已下载备份文件",
+    msgImported:"已导入数据",msgImportFail:"不是有效的 JSON 文件",msgNeedName:"请输入品牌和咖啡豆名称",
+    loading:"加载中…",fbError:"需要 Firebase 配置。请填写 HTML 文件顶部的 FIREBASE_CONFIG。（当前仅本地保存）",
+    connecting:"正在连接 Firebase…",confirmDel:"删除这个咖啡豆？",
+    logoTitle:"烘焙品牌 Logo 管理",
+    logoDesc:"可为咖啡豆中登记的每个品牌上传 Logo（PNG）。建议使用 1:1 正方形图片，系统会自动压缩为小尺寸。",
+    logoUpload:"上传 Logo",logoChange:"更换",logoRemove:"删除",
+    logoNoBrands:"先登记咖啡豆后，品牌列表将显示在此。",
+    logoSaved:"Logo 已保存",logoRemoved:"Logo 已删除",logoErr:"只能上传 PNG 图片文件"},
+  th:{appTitle:"บันทึกโน้ตเมล็ดกาแฟ คาเฟ่เดนนิส",appSubtitle:"ข้อมูลเมล็ดกาแฟดริป · แดชบอร์ดโหวตความนิยม",
+    tabDash:"แดชบอร์ด",tabAdmin:"ผู้ดูแล",statBeans:"เมล็ดที่ลงทะเบียน",statVotes:"โหวตทั้งหมด",statTop:"อันดับ 1",statTopProc:"กระบวนการยอดนิยม",unitKind:" ชนิด",
+    rankTitle:"อันดับการโหวต",mapTitle:"แผนที่แหล่งผลิต",mapClear:"ล้างตัวกรอง",
+    mapHint:"แตะจุดเพื่อดูเมล็ดจากแหล่งนั้น ขนาดจุดแปรผันตามจำนวนไลก์",
+    filterLabel:"เรียงตาม",sVotes:"ยอดนิยม",sBrand:"แบรนด์",sCountry:"แหล่งผลิต",sProcess:"กระบวนการ",sPrice:"ราคา",sNotes:"โน้ต",
+    procAll:"ทุกกระบวนการ",noBeans:"ไม่มีเมล็ดที่ตรงกับตัวกรอง",
+    adminAuth:"เข้าสู่ระบบผู้ดูแล",adminPwHint:"กรอกรหัสผ่าน",adminEnter:"เข้าสู่ระบบ",adminPwWrong:"รหัสผ่านไม่ถูกต้อง",
+    backupTitle:"สำรอง / อัปโหลดข้อมูล",backupDesc:"ข้อมูลเมล็ดและการโหวตเก็บใน Firebase และแชร์กับผู้เข้าชมทุกคน กรุณาสำรองข้อมูลเป็นประจำ",
+    btnExport:"สำรองข้อมูล (ส่งออก JSON)",btnImport:"อัปโหลด (นำเข้า JSON)",
+    patTitle:"การป้อนรูปแบบ — ลงทะเบียนหลายรายการ",
+    patDesc:"หนึ่งบรรทัดต่อหนึ่งเมล็ด คั่นช่องด้วย | ตามลำดับที่กำหนด วางหลายบรรทัดเพื่อลงทะเบียนพร้อมกัน\nลำดับ: แบรนด์ | ชื่อ | แหล่งผลิต | กระบวนการ | โน้ต | โน้ตละเอียด | ราคา\nโน้ต/กระบวนการ/แหล่งผลิต รองรับ ไทย/เกาหลี/อังกฤษ/จีน อัตโนมัติ ใช้จุลภาคสำหรับหลายโน้ต",
+    patBtn:"ลงทะเบียนหลายรายการ",patResult:" เมล็ดลงทะเบียนแล้ว",patNone:"ไม่พบเมล็ดกาแฟ ตรวจสอบรูปแบบ",
+    formAdd:"เพิ่ม / แก้ไขเมล็ด",fBrand:"แบรนด์ผู้คั่ว",fName:"ชื่อเมล็ด",fCountry:"แหล่งผลิต (ประเทศ)",fProcess:"กระบวนการ",
+    fNotes:"โน้ตเมล็ดกาแฟ — หมวด SCAA (เลือกหลายข้อ)",fSubnotes:"โน้ตโดยละเอียด",fSubPlaceholder:"เช่น มะลิ, เบอร์กามอท, มะนาว",fPrice:"ราคา (วอน)",
+    btnAdd:"เพิ่ม",btnSaveEdit:"บันทึก",btnCancel:"ยกเลิก",listTitle:"รายการเมล็ด · ปรับคะแนนโหวต",
+    msgAdded:"เพิ่มแล้ว",msgEdited:"อัปเดตแล้ว",msgDeleted:"ลบแล้ว",msgExported:"ดาวน์โหลดไฟล์สำรองแล้ว",
+    msgImported:"นำเข้าข้อมูลแล้ว",msgImportFail:"ไม่ใช่ไฟล์ JSON ที่ถูกต้อง",msgNeedName:"กรอกแบรนด์และชื่อเมล็ด",
+    loading:"กำลังโหลด…",fbError:"ต้องตั้งค่า Firebase กรอก FIREBASE_CONFIG ที่ส่วนบนของไฟล์ HTML (ขณะนี้บันทึกเฉพาะในเครื่อง)",
+    connecting:"กำลังเชื่อมต่อ Firebase…",confirmDel:"ลบเมล็ดนี้?",
+    logoTitle:"จัดการโลโก้แบรนด์ผู้คั่ว",
+    logoDesc:"อัปโหลดโลโก้ (PNG) สำหรับแต่ละแบรนด์ที่ลงทะเบียนไว้ แนะนำภาพสี่เหลี่ยมจัตุรัส 1:1 ระบบจะบีบอัดเป็นขนาดเล็กอัตโนมัติ",
+    logoUpload:"อัปโหลดโลโก้",logoChange:"เปลี่ยน",logoRemove:"ลบ",
+    logoNoBrands:"ลงทะเบียนเมล็ดกาแฟก่อน แล้วรายการแบรนด์จะปรากฏที่นี่",
+    logoSaved:"บันทึกโลโก้แล้ว",logoRemoved:"ลบโลโก้แล้ว",logoErr:"อัปโหลดได้เฉพาะไฟล์ภาพ PNG เท่านั้น"}
+};
+
+/* ============================================================
+   상태 & 유틸
+   ============================================================ */
+const noteLabel=(id,l)=>NOTE_LABEL[id]?NOTE_LABEL[id][l]:id;
+const procLabel=(id,l)=>PROC_LABEL[id]?PROC_LABEL[id][l]:id;
+const countryName=(id,l)=>C_BY_ID[id]?C_BY_ID[id].names[l]:id;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const state={
+  beans:null, brandLogos:{}, lang:localStorage.getItem("cdn-lang")||"ko",
+  myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
+  tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"",
+  authed:false, editId:null,
+  form:{brand:"",name:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""},
+  flash:"", patText:"", patMsg:"", fbReady:false
+};
+const t=k=>(T[state.lang]&&T[state.lang][k])||T.ko[k];
+const fmtPrice=n=>state.lang==="ko"?(n||0).toLocaleString()+"원":"₩"+(n||0).toLocaleString();
+
+/* ---------- Firebase ----------
+   DB 구조: cafeDennis/beans (배열), cafeDennis/brandLogos (브랜드명→dataURL) */
+let beansRef=null, logosRef=null;
+function initFirebase(){
+  const cfg=FIREBASE_CONFIG;
+  if(!cfg.apiKey||cfg.apiKey.indexOf("여기에")===0||!cfg.databaseURL||cfg.databaseURL.indexOf("여기에")>=0){
+    state.fbReady=false; loadLocal(); return;
+  }
+  try{
+    firebase.initializeApp(cfg);
+    const root=firebase.database().ref("cafeDennis");
+    beansRef=root.child("beans");
+    logosRef=root.child("brandLogos");
+    state.fbReady=true;
+    beansRef.on("value",snap=>{
+      const v=snap.val();
+      if(v&&Array.isArray(v)){state.beans=v;}
+      else if(v&&typeof v==="object"){state.beans=Object.values(v);}
+      else{state.beans=SEED.slice();beansRef.set(SEED);}
+      render();
+    },err=>{console.error("Firebase:",err);state.fbReady=false;loadLocal();});
+    logosRef.on("value",snap=>{
+      state.brandLogos=snap.val()||{};
+      render();
+    },err=>{console.error("Firebase logos:",err);});
+  }catch(e){console.error(e);state.fbReady=false;loadLocal();}
+}
+function loadLocal(){
+  const ls=localStorage.getItem("cdn-beans");
+  state.beans=ls?JSON.parse(ls):SEED.slice();
+  state.brandLogos=JSON.parse(localStorage.getItem("cdn-logos")||"{}");
+  render();
+}
+function saveBeans(next){
+  state.beans=next;
+  if(state.fbReady&&beansRef){beansRef.set(next).catch(e=>console.error(e));}
+  else{localStorage.setItem("cdn-beans",JSON.stringify(next));render();}
+}
+function saveLogos(next){
+  state.brandLogos=next;
+  if(state.fbReady&&logosRef){logosRef.set(next).catch(e=>console.error(e));}
+  else{localStorage.setItem("cdn-logos",JSON.stringify(next));render();}
+}
+/* 투표 합산 */
+function voteBean(id){
+  const voted=state.myVotes.includes(id);
+  const delta=voted?-1:1;
+  state.beans=state.beans.map(b=>b.id===id?{...b,votes:Math.max(0,(b.votes||0)+delta)}:b);
+  if(state.fbReady&&beansRef){beansRef.set(state.beans).catch(e=>console.error(e));}
+  else{localStorage.setItem("cdn-beans",JSON.stringify(state.beans));}
+  state.myVotes=voted?state.myVotes.filter(x=>x!==id):[...state.myVotes,id];
+  localStorage.setItem("cdn-myvotes",JSON.stringify(state.myVotes));
+  render();
+}
+
+/* ---------- PNG 로고 압축 (1:1 정사각, 최대 160px) ---------- */
+function compressLogo(file,cb){
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const SZ=160;
+      const cv=document.createElement("canvas");
+      cv.width=SZ;cv.height=SZ;
+      const ctx=cv.getContext("2d");
+      /* 1:1 업로드 전제 — 정사각 캔버스에 꽉 채움 (혹시 비정사각이면 center-crop) */
+      const side=Math.min(img.width,img.height);
+      const sx=(img.width-side)/2, sy=(img.height-side)/2;
+      ctx.clearRect(0,0,SZ,SZ);
+      ctx.drawImage(img,sx,sy,side,side,0,0,SZ,SZ);
+      cb(cv.toDataURL("image/png"));
+    };
+    img.onerror=()=>cb(null);
+    img.src=fr.result;
+  };
+  fr.onerror=()=>cb(null);
+  fr.readAsDataURL(file);
+}
+
+/* ---------- 패턴 파싱 ---------- */
+function mapCountry(s){
+  const k=(s||"").trim().toLowerCase();
+  if(COUNTRY_ALIAS[k])return COUNTRY_ALIAS[k];
+  for(const key in COUNTRY_ALIAS){if(k.indexOf(key)>=0)return COUNTRY_ALIAS[key];}
+  return COUNTRIES[0].id;
+}
+function mapProcess(s){
+  const k=(s||"").trim().toLowerCase().replace(/[\s()]/g,"");
+  if(PROC_ALIAS[k])return PROC_ALIAS[k];
+  for(const key in PROC_ALIAS){if(k.indexOf(key)>=0)return PROC_ALIAS[key];}
+  return "Other";
+}
+function mapNotes(s){
+  const out=[];
+  (s||"").split(/[,，、·]/).forEach(part=>{
+    const k=part.trim().toLowerCase();
+    if(!k)return;
+    if(NOTE_ALIAS[k]){if(out.indexOf(NOTE_ALIAS[k])<0)out.push(NOTE_ALIAS[k]);return;}
+    for(const key in NOTE_ALIAS){if(k.indexOf(key)>=0){if(out.indexOf(NOTE_ALIAS[key])<0)out.push(NOTE_ALIAS[key]);break;}}
+  });
+  return out.slice(0,3);
+}
+function parsePattern(text){
+  const beans=[];
+  text.split(/\r?\n/).forEach(line=>{
+    const ln=line.trim();
+    if(!ln)return;
+    const f=ln.split("|").map(x=>x.trim());
+    if(f.length<2||!f[0]||!f[1])return;
+    beans.push({
+      id:"b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+      brand:f[0], name:f[1],
+      country:mapCountry(f[2]||""),
+      process:mapProcess(f[3]||""),
+      notes:mapNotes(f[4]||""),
+      subnotes:f[5]||"",
+      price:Number((f[6]||"").replace(/[^\d]/g,""))||0,
+      votes:0
+    });
+  });
+  return beans;
+}
+
+/* ============================================================
+   지도
+   ============================================================ */
+const CONT={
+  na:[[-168,66],[-95,72],[-60,52],[-78,25],[-88,13],[-83,8],[-92,16],[-106,23],[-123,40],[-130,54],[-168,66]],
+  sa:[[-79,9],[-60,5],[-50,-2],[-35,-6],[-39,-22],[-58,-40],[-67,-55],[-73,-44],[-71,-18],[-81,-4],[-79,9]],
+  af:[[-17,15],[0,32],[11,37],[33,31],[44,12],[51,11],[42,-3],[40,-16],[35,-26],[20,-35],[14,-23],[9,3],[-8,5],[-17,15]],
+  eu:[[-9,37],[3,43],[13,40],[28,37],[40,47],[30,60],[12,58],[-2,51],[-9,37]],
+  as:[[40,47],[60,42],[68,25],[78,8],[80,14],[92,22],[98,9],[106,11],[122,40],[142,46],[160,62],[110,73],[60,72],[42,58],[40,47]],
+  au:[[114,-22],[131,-12],[143,-12],[151,-25],[146,-39],[131,-32],[115,-34],[112,-22],[114,-22]]
+};
+const proj=(lon,lat)=>[(lon+180)*2,(90-lat)*2];
+function mapSVG(cstats,filter){
+  const beltTop=(90-23.5)*2,beltBot=(90+23.5)*2;
+  let s='<svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">';
+  s+='<defs><linearGradient id="wal" x1="0" y1="0" x2="0" y2="1">'+
+     '<stop offset="0%" stop-color="#9a6f4d"/><stop offset="100%" stop-color="#6b4a32"/></linearGradient>'+
+     '<radialGradient id="mbg" cx="50%" cy="45%" r="75%">'+
+     '<stop offset="0%" stop-color="#1f1c1d"/><stop offset="100%" stop-color="#141213"/></radialGradient></defs>';
+  s+='<rect width="720" height="360" fill="url(#mbg)"/>';
+  [60,120,180,240,300,360,420,480,540,600,660].forEach(x=>{s+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="360" stroke="#35302d" stroke-width="0.5" opacity="0.5"/>';});
+  [60,120,180,240,300].forEach(y=>{s+='<line x1="0" y1="'+y+'" x2="720" y2="'+y+'" stroke="#35302d" stroke-width="0.5" opacity="0.5"/>';});
+  s+='<rect x="0" y="'+beltTop+'" width="720" height="'+(beltBot-beltTop)+'" fill="#cf954f" opacity="0.07"/>';
+  s+='<line x1="0" y1="'+beltTop+'" x2="720" y2="'+beltTop+'" stroke="#cf954f" stroke-width="0.7" stroke-dasharray="4 4" opacity="0.5"/>';
+  s+='<line x1="0" y1="'+beltBot+'" x2="720" y2="'+beltBot+'" stroke="#cf954f" stroke-width="0.7" stroke-dasharray="4 4" opacity="0.5"/>';
+  s+='<text x="710" y="'+(beltTop+14)+'" text-anchor="end" font-size="10" fill="#cf954f" opacity="0.7" letter-spacing="1">COFFEE BELT</text>';
+  Object.values(CONT).forEach(p=>{
+    const pts=p.map(c=>proj(c[0],c[1]).join(",")).join(" ");
+    s+='<polygon points="'+pts+'" fill="#6f7276" opacity="0.22" stroke="#bcbfc3" stroke-width="0.6" stroke-opacity="0.4"/>';
+  });
+  cstats.forEach(cs=>{
+    const p=proj(cs.lon,cs.lat),x=p[0],y=p[1];
+    const r=5+Math.sqrt(cs.votes)*2.1;
+    const active=filter===cs.id;
+    s+='<g style="cursor:pointer" onclick="window.pickCountry(\''+cs.id+'\')">';
+    if(active)s+='<circle cx="'+x+'" cy="'+y+'" r="'+(r+6)+'" fill="#cf954f" opacity="0.3"/>';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="url(#wal)" stroke="'+(active?"#cf954f":"#bcbfc3")+'" stroke-width="'+(active?2:1.3)+'"/>';
+    s+='<text x="'+x+'" y="'+(y+r+12)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#f4f1ea">'+esc(cs.name)+'</text>';
+    s+='<text x="'+x+'" y="'+(y+r+23)+'" text-anchor="middle" font-size="9.5" fill="#cf954f">&#9829; '+cs.votes+' &#183; '+cs.count+esc(t("unitKind"))+'</text>';
+    s+='</g>';
+  });
+  s+='</svg>';
+  return s;
+}
+
+/* ============================================================
+   렌더
+   ============================================================ */
+function flash(msg){state.flash=msg;render();setTimeout(()=>{state.flash="";render();},2500);}
+function patMsg(msg){state.patMsg=msg;render();setTimeout(()=>{state.patMsg="";render();},3500);}
+
+function render(){
+  const app=document.getElementById("app");
+  const l=state.lang;
+  if(!state.beans){app.innerHTML='<div style="text-align:center;padding:80px;color:#a8a29a">'+esc(t("loading"))+'</div>';return;}
+
+  let h="";
+  /* 헤더 */
+  h+='<header><div class="hdrow">'+
+     '<div style="display:flex;align-items:center;gap:12px">'+
+     '<div class="logo">&#9749;</div>'+
+     '<div><h1>'+esc(t("appTitle"))+'</h1>'+
+     '<p style="font-size:13px;color:#6f7276;margin-top:2px">'+esc(t("appSubtitle"))+'</p></div></div>'+
+     '<div style="display:flex;align-items:center;gap:6px">'+
+     '<span style="color:#6f7276;font-size:13px">&#127760;</span>'+
+     '<select class="sel" onchange="window.setLang(this.value)">'+
+     LANGS.map(x=>'<option value="'+x.id+'"'+(x.id===l?" selected":"")+'>'+x.label+'</option>').join("")+
+     '</select></div></div></header>';
+
+  /* 탭 */
+  h+='<div class="tabs">'+
+     '<button class="tab'+(state.tab==="dash"?" on":"")+'" onclick="window.setTab(\'dash\')">&#128200; '+esc(t("tabDash"))+'</button>'+
+     '<button class="tab'+(state.tab==="admin"?" on":"")+'" onclick="window.setTab(\'admin\')">&#9881; '+esc(t("tabAdmin"))+'</button>'+
+     '</div>';
+
+  h+= state.tab==="dash" ? renderDash() : renderAdmin();
+
+  app.innerHTML=h;
+}
+
+function renderDash(){
+  const l=state.lang, beans=state.beans;
+  /* 통계 */
+  const totalVotes=beans.reduce((s,b)=>s+(b.votes||0),0);
+  const top=[...beans].sort((a,b)=>(b.votes||0)-(a.votes||0))[0];
+  const pm={};beans.forEach(b=>{pm[b.process]=(pm[b.process]||0)+(b.votes||0);});
+  const topProc=Object.entries(pm).sort((a,b)=>b[1]-a[1])[0];
+
+  let h='<div class="stats">'+
+    statCard("&#9749;",t("statBeans"),beans.length+t("unitKind"),"")+
+    statCard("&#9829;",t("statVotes"),totalVotes,"")+
+    statCard("&#127942;",t("statTop"),top?esc(top.name):"-",top?esc(top.brand)+" &#183; &#9829;"+top.votes:"")+
+    statCard("&#129514;",t("statTopProc"),topProc?esc(procLabel(topProc[0],l)):"-",topProc?"&#9829;"+topProc[1]:"")+
+    '</div>';
+
+  /* 랭킹 차트 */
+  const cd=[...beans].sort((a,b)=>(b.votes||0)-(a.votes||0)).slice(0,8);
+  const max=Math.max(1,...cd.map(b=>b.votes||0));
+  h+='<div class="card" style="padding:16px;margin-bottom:20px">'+
+     '<h2 class="sec" style="margin-bottom:12px">&#128200; '+esc(t("rankTitle"))+'</h2>';
+  cd.forEach((b,i)=>{
+    const w=Math.round((b.votes||0)/max*100);
+    h+='<div class="barrow"><div class="barlabel">'+esc(b.name)+'</div>'+
+       '<div class="bartrack"><div class="barfill" style="width:'+Math.max(w,4)+'%;background:'+(i===0?"#cf954f":"#9a6f4d")+'">'+(b.votes||0)+'</div></div></div>';
+  });
+  h+='</div>';
+
+  /* 지도 */
+  const cm={};
+  beans.forEach(b=>{const c=C_BY_ID[b.country];if(!c)return;
+    if(!cm[b.country])cm[b.country]={id:b.country,name:c.names[l],lat:c.lat,lon:c.lon,votes:0,count:0};
+    cm[b.country].votes+=b.votes||0;cm[b.country].count++;});
+  const cstats=Object.values(cm);
+  h+='<div class="card" style="padding:16px;margin-bottom:20px">'+
+     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">'+
+     '<h2 class="sec">&#127757; '+esc(t("mapTitle"))+'</h2>'+
+     (state.countryFilter?'<button class="chip on" onclick="window.pickCountry(\''+state.countryFilter+'\')">&#10005; '+esc(countryName(state.countryFilter,l))+' &#183; '+esc(t("mapClear"))+'</button>':"")+
+     '</div><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div>'+
+     '<p class="muted" style="margin-top:8px">'+esc(t("mapHint"))+'</p></div>';
+
+  /* 정렬 */
+  const sorts=[["votes","sVotes"],["brand","sBrand"],["country","sCountry"],["process","sProcess"],["price","sPrice"],["notes","sNotes"]];
+  h+='<div class="card" style="padding:14px;margin-bottom:16px"><div class="sortbar">'+
+     '<span style="font-size:12px;font-weight:700;color:#6f7276;margin-right:4px">'+esc(t("filterLabel"))+'</span>'+
+     sorts.map(s=>'<button class="chip'+(state.sortKey===s[0]?" on":"")+'" onclick="window.setSort(\''+s[0]+'\')">'+esc(t(s[1]))+'</button>').join("")+
+     '<select class="sel" style="margin-left:auto" onchange="window.setProcFilter(this.value)">'+
+     '<option value="">'+esc(t("procAll"))+'</option>'+
+     PROCESSES.map(p=>'<option value="'+p+'"'+(state.processFilter===p?" selected":"")+'>'+esc(procLabel(p,l))+'</option>').join("")+
+     '</select></div></div>';
+
+  /* 카드 */
+  let view=beans.filter(b=>(!state.countryFilter||b.country===state.countryFilter)&&(!state.processFilter||b.process===state.processFilter));
+  const cmp={
+    votes:(a,b)=>(b.votes||0)-(a.votes||0),
+    brand:(a,b)=>a.brand.localeCompare(b.brand,"ko"),
+    country:(a,b)=>countryName(a.country,l).localeCompare(countryName(b.country,l)),
+    process:(a,b)=>procLabel(a.process,l).localeCompare(procLabel(b.process,l)),
+    price:(a,b)=>(a.price||0)-(b.price||0),
+    notes:(a,b)=>((a.notes||[])[0]||"").localeCompare(((b.notes||[])[0]||""))
+  };
+  view=[...view].sort(cmp[state.sortKey]||cmp.votes);
+
+  h+='<div class="beans">';
+  if(!view.length)h+='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6f7276;font-size:13px">'+esc(t("noBeans"))+'</div>';
+  view.forEach(b=>{
+    const voted=state.myVotes.includes(b.id);
+    const logo=state.brandLogos[b.brand];
+    const logoHtml=logo
+      ? '<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>'
+      : '<div class="blogo ph">&#9749;</div>';
+    h+='<div class="bean">'+
+       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+       '<div class="brandrow">'+logoHtml+
+       '<div><div class="brand">'+esc(b.brand)+'</div><div class="bname">'+esc(b.name)+'</div></div></div>'+
+       '<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div>'+
+       '<div class="origin">&#127757; '+esc(countryName(b.country,l))+'</div>'+
+       '<div class="notetags">'+
+       (b.notes||[]).map(n=>'<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>').join("")+
+       '</div>'+
+       (b.subnotes?'<div class="subnote">&#8220;'+esc(b.subnotes)+'&#8221;</div>':"")+
+       '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
+       '<button class="votebtn'+(voted?" voted":"")+'" onclick="window.vote(\''+b.id+'\')">'+
+       (voted?"&#10084;":"&#9825;")+' '+(b.votes||0)+'</button></div>'+
+       '</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function statCard(ico,lbl,val,sub){
+  return '<div class="stat"><div class="lbl">'+ico+' '+esc(lbl)+'</div>'+
+    '<div class="val">'+val+'</div>'+(sub?'<div class="sub">'+sub+'</div>':"")+'</div>';
+}
+
+function renderAdmin(){
+  const l=state.lang;
+  if(!state.authed){
+    return '<div class="card" style="padding:32px;max-width:360px;margin:0 auto;text-align:center">'+
+      '<div style="font-size:28px;margin-bottom:12px">&#128274;</div>'+
+      '<h2 style="font-size:15px;font-weight:800;margin-bottom:4px">'+esc(t("adminAuth"))+'</h2>'+
+      '<p class="muted" style="margin-bottom:16px">'+esc(t("adminPwHint"))+'</p>'+
+      '<input class="fi" id="pwInput" type="password" style="text-align:center" '+
+      'onkeydown="if(event.key===\'Enter\')window.tryAuth()"/>'+
+      '<div id="pwErr" class="err hidden">'+esc(t("adminPwWrong"))+'</div>'+
+      '<button class="btn" style="width:100%;margin-top:12px" onclick="window.tryAuth()">'+esc(t("adminEnter"))+'</button>'+
+      '</div>';
+  }
+
+  let h="";
+  if(state.flash)h+='<div class="flash">'+esc(state.flash)+'</div>';
+  if(!state.fbReady)h+='<div class="fbwarn">&#9888; '+esc(t("fbError"))+'</div>';
+
+  /* 백업 */
+  h+='<div class="card" style="padding:16px;margin-bottom:16px">'+
+     '<h2 class="sec" style="margin-bottom:4px">'+esc(t("backupTitle"))+'</h2>'+
+     '<p class="muted" style="margin-bottom:12px">'+esc(t("backupDesc"))+'</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+     '<button class="btn ghost" onclick="window.exportJSON()">&#11015; '+esc(t("btnExport"))+'</button>'+
+     '<button class="btn ghost" onclick="document.getElementById(\'impFile\').click()">&#11014; '+esc(t("btnImport"))+'</button>'+
+     '<input type="file" id="impFile" accept=".json,application/json" class="hidden" onchange="window.importJSON(event)"/>'+
+     '</div></div>';
+
+  /* 브랜드 로고 관리 */
+  const brands=[];
+  state.beans.forEach(b=>{if(b.brand&&brands.indexOf(b.brand)<0)brands.push(b.brand);});
+  brands.sort((a,b)=>a.localeCompare(b,"ko"));
+  h+='<div class="card" style="padding:16px;margin-bottom:16px">'+
+     '<h2 class="sec" style="margin-bottom:4px">&#127991; '+esc(t("logoTitle"))+'</h2>'+
+     '<p class="muted" style="margin-bottom:12px">'+esc(t("logoDesc"))+'</p>';
+  if(!brands.length){
+    h+='<p class="muted">'+esc(t("logoNoBrands"))+'</p>';
+  }else{
+    brands.forEach((br,i)=>{
+      const logo=state.brandLogos[br];
+      const idForInput="logoFile_"+i;
+      h+='<div class="logorow">'+
+         (logo?'<img class="logobig" src="'+logo+'" alt="'+esc(br)+'"/>':'<div class="logobig ph">&#9749;</div>')+
+         '<div style="flex:1;min-width:100px"><div style="font-size:13px;font-weight:700">'+esc(br)+'</div>'+
+         '<div class="muted">'+state.beans.filter(b=>b.brand===br).length+esc(t("unitKind"))+'</div></div>'+
+         '<input type="file" id="'+idForInput+'" accept="image/png" class="hidden" '+
+         'onchange="window.uploadLogo(\''+esc(br).replace(/'/g,"\\'")+'\',event)"/>'+
+         '<button class="btn ghost" onclick="document.getElementById(\''+idForInput+'\').click()">&#11014; '+
+         esc(logo?t("logoChange"):t("logoUpload"))+'</button>'+
+         (logo?'<button class="icobtn" style="color:#c0524e" onclick="window.removeLogo(\''+esc(br).replace(/'/g,"\\'")+'\')">&#128465;</button>':"")+
+         '</div>';
+    });
+  }
+  h+='</div>';
+
+  /* 패턴 입력 */
+  h+='<div class="card" style="padding:16px;margin-bottom:16px;background:linear-gradient(135deg,#252021,#1a1718);border-color:#6b4a32">'+
+     '<h2 class="sec" style="margin-bottom:4px">&#9776; '+esc(t("patTitle"))+'</h2>'+
+     '<p class="muted" style="margin-bottom:8px;white-space:pre-wrap">'+esc(t("patDesc"))+'</p>'+
+     '<div class="pre" style="margin-bottom:8px">브랜드 | 원두명 | 생산지 | 가공법 | 노트 | 세부노트 | 금액\n모모스커피 | 예가체프 코체레 | 에티오피아 | 워시드 | 꽃향,과일향 | 자스민,베르가못,레몬 | 28000\n프릳츠 | 우일라 수프리모 | 콜롬비아 | washed | 단맛,견과 | 캐러멜,초콜릿 | 24000</div>'+
+     '<textarea class="fi" id="patInput" rows="4" placeholder="모모스커피 | 예가체프 코체레 | 에티오피아 | 워시드 | 꽃향,과일향 | 자스민,베르가못,레몬 | 28000"'+
+     ' oninput="window.state_patText(this.value)">'+esc(state.patText)+'</textarea>'+
+     (state.patMsg?'<div class="err" style="color:#cf954f">'+esc(state.patMsg)+'</div>':"")+
+     '<button class="btn amber" style="margin-top:10px" onclick="window.runPattern()">&#9776; '+esc(t("patBtn"))+'</button>'+
+     '</div>';
+
+  /* 추가/수정 폼 */
+  const f=state.form;
+  h+='<div class="card" style="padding:16px;margin-bottom:16px">'+
+     '<h2 class="sec" style="margin-bottom:12px">'+(state.editId?"&#9998;":"&#43;")+' '+esc(t("formAdd"))+'</h2>'+
+     '<div class="grid2">'+
+     fld(t("fBrand"),'<input class="fi" value="'+esc(f.brand)+'" oninput="window.fForm(\'brand\',this.value)"/>')+
+     fld(t("fName"),'<input class="fi" value="'+esc(f.name)+'" oninput="window.fForm(\'name\',this.value)"/>')+
+     fld(t("fCountry"),'<select class="fi" onchange="window.fForm(\'country\',this.value)">'+
+       COUNTRIES.map(c=>'<option value="'+c.id+'"'+(f.country===c.id?" selected":"")+'>'+esc(c.names[l])+'</option>').join("")+'</select>')+
+     fld(t("fProcess"),'<select class="fi" onchange="window.fForm(\'process\',this.value)">'+
+       PROCESSES.map(p=>'<option value="'+p+'"'+(f.process===p?" selected":"")+'>'+esc(procLabel(p,l))+'</option>').join("")+'</select>')+
+     '<div class="span2"><label class="fl">'+esc(t("fNotes"))+'</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">'+
+     SCAA.map(n=>{const on=f.notes.includes(n);
+       return '<button class="notebtn" style="'+(on?"background:"+NOTE_COLOR[n]+"33;color:"+NOTE_COLOR[n]+";border-color:"+NOTE_COLOR[n]+"77":"")+'" onclick="window.toggleNote(\''+n+'\')">'+esc(noteLabel(n,l))+'</button>';
+     }).join("")+'</div></div>'+
+     '<div class="span2">'+fld(t("fSubnotes"),'<input class="fi" value="'+esc(f.subnotes)+'" placeholder="'+esc(t("fSubPlaceholder"))+'" oninput="window.fForm(\'subnotes\',this.value)"/>')+'</div>'+
+     fld(t("fPrice"),'<input class="fi" type="number" value="'+esc(f.price)+'" oninput="window.fForm(\'price\',this.value)"/>')+
+     '</div>'+
+     '<div style="display:flex;gap:8px;margin-top:12px">'+
+     '<button class="btn" onclick="window.saveForm()">'+esc(state.editId?t("btnSaveEdit"):t("btnAdd"))+'</button>'+
+     (state.editId?'<button class="btn ghost" onclick="window.cancelEdit()">'+esc(t("btnCancel"))+'</button>':"")+
+     '</div></div>';
+
+  /* 목록 */
+  h+='<div class="card" style="padding:16px"><h2 class="sec" style="margin-bottom:12px">'+
+     esc(t("listTitle"))+' ('+state.beans.length+esc(t("unitKind"))+')</h2>';
+  state.beans.forEach(b=>{
+    const logo=state.brandLogos[b.brand];
+    h+='<div class="arow">'+
+       (logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>')+
+       '<div style="flex:1;min-width:120px"><div style="font-size:13px;font-weight:700">'+esc(b.name)+'</div>'+
+       '<div class="muted">'+esc(b.brand)+' &#183; '+esc(countryName(b.country,l))+' &#183; '+esc(procLabel(b.process,l))+'</div></div>'+
+       '<div style="display:flex;align-items:center;gap:4px">'+
+       '<button class="stepbtn" onclick="window.adjust(\''+b.id+'\',-1)">&#8722;</button>'+
+       '<span style="font-size:13px;font-weight:800;width:40px;text-align:center;color:#cf954f">&#9829;'+(b.votes||0)+'</span>'+
+       '<button class="stepbtn" onclick="window.adjust(\''+b.id+'\',1)">&#43;</button></div>'+
+       '<button class="icobtn" onclick="window.editBean(\''+b.id+'\')">&#9998;</button>'+
+       '<button class="icobtn" style="color:#c0524e" onclick="window.delBean(\''+b.id+'\')">&#128465;</button>'+
+       '</div>';
+  });
+  h+='</div>';
+  return h;
+}
+function fld(label,inner){return '<div><label class="fl">'+esc(label)+'</label>'+inner+'</div>';}
+
+/* ============================================================
+   이벤트 핸들러 (window 등록)
+   ============================================================ */
+window.setLang=v=>{state.lang=v;localStorage.setItem("cdn-lang",v);render();};
+window.setTab=v=>{state.tab=v;render();};
+window.setSort=v=>{state.sortKey=v;render();};
+window.setProcFilter=v=>{state.processFilter=v;render();};
+window.pickCountry=id=>{state.countryFilter=state.countryFilter===id?"":id;render();};
+window.vote=id=>voteBean(id);
+window.tryAuth=()=>{
+  const el=document.getElementById("pwInput");
+  if(el&&el.value===ADMIN_PW){state.authed=true;render();}
+  else{const e=document.getElementById("pwErr");if(e)e.classList.remove("hidden");}
+};
+window.fForm=(k,v)=>{state.form[k]=v;};
+window.toggleNote=n=>{
+  const i=state.form.notes.indexOf(n);
+  if(i>=0)state.form.notes.splice(i,1);else state.form.notes.push(n);
+  render();
+};
+window.saveForm=()=>{
+  const f=state.form;
+  if(!f.brand.trim()||!f.name.trim()){flash(t("msgNeedName"));return;}
+  const rec={brand:f.brand.trim(),name:f.name.trim(),country:f.country,process:f.process,
+    notes:f.notes.slice(),subnotes:f.subnotes,price:Number(f.price)||0};
+  if(state.editId){
+    saveBeans(state.beans.map(b=>b.id===state.editId?Object.assign({},b,rec):b));
+    flash(t("msgEdited"));
+  }else{
+    rec.id="b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);rec.votes=0;
+    saveBeans([...state.beans,rec]);
+    flash(t("msgAdded"));
+  }
+  state.editId=null;
+  state.form={brand:"",name:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""};
+  render();
+};
+window.editBean=id=>{
+  const b=state.beans.find(x=>x.id===id);if(!b)return;
+  state.editId=id;
+  state.form={brand:b.brand,name:b.name,country:b.country,process:b.process,
+    notes:(b.notes||[]).slice(),subnotes:b.subnotes||"",price:b.price||""};
+  state.tab="admin";render();
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+window.cancelEdit=()=>{
+  state.editId=null;
+  state.form={brand:"",name:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""};
+  render();
+};
+window.delBean=id=>{
+  if(!confirm(t("confirmDel")))return;
+  saveBeans(state.beans.filter(b=>b.id!==id));
+  if(state.editId===id)window.cancelEdit();
+  flash(t("msgDeleted"));
+};
+window.adjust=(id,d)=>{
+  saveBeans(state.beans.map(b=>b.id===id?Object.assign({},b,{votes:Math.max(0,(b.votes||0)+d)}):b));
+};
+window.state_patText=v=>{state.patText=v;};
+window.uploadLogo=(brand,e)=>{
+  const file=e.target.files&&e.target.files[0];
+  e.target.value="";
+  if(!file)return;
+  if(file.type!=="image/png"){flash(t("logoErr"));return;}
+  compressLogo(file,dataUrl=>{
+    if(!dataUrl){flash(t("logoErr"));return;}
+    const next=Object.assign({},state.brandLogos);
+    next[brand]=dataUrl;
+    saveLogos(next);
+    flash(t("logoSaved"));
+  });
+};
+window.removeLogo=brand=>{
+  const next=Object.assign({},state.brandLogos);
+  delete next[brand];
+  saveLogos(next);
+  flash(t("logoRemoved"));
+};
+window.runPattern=()=>{
+  const parsed=parsePattern(state.patText||"");
+  if(!parsed.length){patMsg(t("patNone"));return;}
+  saveBeans([...state.beans,...parsed]);
+  state.patText="";
+  patMsg(parsed.length+t("patResult"));
+};
+window.exportJSON=()=>{
+  const payload={beans:state.beans,brandLogos:state.brandLogos,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="cafe-dennis-beans-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+  flash(t("msgExported"));
+};
+window.importJSON=e=>{
+  const file=e.target.files&&e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      /* 신형: {beans,brandLogos} / 구형: 배열 둘 다 지원 */
+      const arr=Array.isArray(data)?data:data.beans;
+      if(!Array.isArray(arr))throw new Error();
+      saveBeans(arr.map(d=>Object.assign({votes:0,notes:[]},d,
+        {id:d.id||"b_"+Math.random().toString(36).slice(2)})));
+      if(data&&data.brandLogos&&typeof data.brandLogos==="object")saveLogos(data.brandLogos);
+      flash(t("msgImported"));
+    }catch(_){flash(t("msgImportFail"));}
+  };
+  r.readAsText(file);
+  e.target.value="";
+};
+
+/* ============================================================
+   시작
+   ============================================================ */
+initFirebase();
+render();
+</script>
