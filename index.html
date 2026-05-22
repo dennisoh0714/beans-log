@@ -414,8 +414,8 @@ function initFirebase(){
     state.fbReady=true;
     beansRef.on("value",snap=>{
       const v=snap.val();
-      if(v&&Array.isArray(v)){state.beans=v;}
-      else if(v&&typeof v==="object"){state.beans=Object.values(v);}
+      if(v&&Array.isArray(v)){state.beans=v.filter(Boolean);}
+      else if(v&&typeof v==="object"){state.beans=Object.keys(v).map(k=>v[k]).filter(Boolean);}
       else{state.beans=SEED.slice();beansRef.set(SEED);}
       render();
     },err=>{console.error("Firebase:",err);state.fbReady=false;loadLocal();});
@@ -432,9 +432,16 @@ function loadLocal(){
   render();
 }
 function saveBeans(next){
-  state.beans=next;
-  if(state.fbReady&&beansRef){beansRef.set(next).catch(e=>console.error(e));}
-  else{localStorage.setItem("cdn-beans",JSON.stringify(next));render();}
+  /* Firebase가 배열에 구멍이 생기면 객체로 바꿔버리는 문제 방지:
+     항상 인덱스가 연속된 깨끗한 배열로 정리해서 저장 */
+  const clean=(next||[]).filter(Boolean).slice();
+  state.beans=clean;
+  if(state.fbReady&&beansRef){
+    beansRef.set(clean).then(()=>render()).catch(e=>{console.error(e);render();});
+  }else{
+    localStorage.setItem("cdn-beans",JSON.stringify(clean));
+    render();
+  }
 }
 function saveLogos(next){
   state.brandLogos=next;
@@ -857,8 +864,13 @@ window.cancelEdit=()=>{
   render();
 };
 window.delBean=id=>{
-  if(!confirm(t("confirmDel")))return;
-  saveBeans(state.beans.filter(b=>b.id!==id));
+  const target=state.beans.find(b=>b.id===id);
+  if(!target)return;
+  let ok=true;
+  try{ok=confirm(t("confirmDel"));}catch(_){ok=true;}
+  if(!ok)return;
+  const next=state.beans.filter(b=>b.id!==id);
+  saveBeans(next);
   if(state.editId===id)window.cancelEdit();
   flash(t("msgDeleted"));
 };
