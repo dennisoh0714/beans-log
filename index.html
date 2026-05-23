@@ -153,6 +153,20 @@
   .reqitem .meta{color:var(--metal);font-weight:700;}
   .reqitem .cmt{color:var(--sub);margin-top:4px;}
   .reqitem .dt{color:var(--metalDark);font-size:10px;margin-top:4px;}
+  /* 일괄 편집 표 */
+  .bulkrow{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;
+    padding:8px;border-radius:8px;background:var(--panel2);
+    border:1px solid var(--border);margin-bottom:6px;align-items:center;}
+  .bulkrow .konm{font-size:12px;color:var(--ink);font-weight:700;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bulkrow input{width:100%;padding:5px 8px;border-radius:6px;font-size:11px;
+    background:var(--panel);color:var(--ink);border:1px solid var(--border);outline:none;}
+  .bulkhead{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;
+    padding:0 8px 4px;font-size:10px;color:var(--metalDark);font-weight:700;}
+  @media(max-width:560px){
+    .bulkrow{grid-template-columns:1fr;}
+    .bulkhead{display:none;}
+  }
 </style>
 
 <div class="wrap" id="app"></div>
@@ -263,6 +277,72 @@ const COUNTRIES = [
   {id:"우간다",lat:1,lon:32.3,names:{ko:"우간다",en:"Uganda",zh:"乌干达",th:"ยูกันดา"}}
 ];
 const C_BY_ID = {}; COUNTRIES.forEach(c=>C_BY_ID[c.id]=c);
+
+/* ============================================================
+   커피 향미 사전 (한국어 → 영어) — 세부 노트 자동 변환용
+   사전에 없는 단어는 한국어 그대로 유지됩니다.
+   ============================================================ */
+const FLAVOR_DICT = {
+  // 꽃·허브
+  "자스민":"jasmine","쟈스민":"jasmine","장미":"rose","라벤더":"lavender","히비스커스":"hibiscus",
+  "꽃향":"floral","꽃":"floral","홍차":"black tea","얼그레이":"earl grey","녹차":"green tea",
+  "베르가못":"bergamot","카모마일":"chamomile","오렌지블라썸":"orange blossom","꿀풀":"honeysuckle",
+  "허브":"herbal","민트":"mint","바질":"basil","세이지":"sage","로즈마리":"rosemary",
+  // 감귤류
+  "레몬":"lemon","라임":"lime","오렌지":"orange","자몽":"grapefruit","귤":"tangerine",
+  "유자":"yuzu","감귤":"citrus","시트러스":"citrus","만다린":"mandarin",
+  // 베리류
+  "딸기":"strawberry","블루베리":"blueberry","라즈베리":"raspberry","블랙베리":"blackberry",
+  "블랙커런트":"blackcurrant","크랜베리":"cranberry","베리":"berry","산딸기":"raspberry",
+  // 핵과·과일
+  "복숭아":"peach","백도":"white peach","황도":"yellow peach","살구":"apricot","자두":"plum",
+  "체리":"cherry","사과":"apple","청사과":"green apple","배":"pear","포도":"grape","청포도":"green grape",
+  "멜론":"melon","수박":"watermelon","무화과":"fig","대추":"jujube",
+  // 열대과일
+  "망고":"mango","파인애플":"pineapple","파파야":"papaya","리치":"lychee","패션후르츠":"passion fruit",
+  "패션프루트":"passion fruit","구아바":"guava","바나나":"banana","코코넛":"coconut",
+  // 건과일
+  "건포도":"raisin","건자두":"prune","대추야자":"date","말린과일":"dried fruit","곶감":"dried persimmon",
+  // 견과·카카오
+  "아몬드":"almond","헤이즐넛":"hazelnut","호두":"walnut","땅콩":"peanut","피칸":"pecan",
+  "캐슈넛":"cashew","견과류":"nuts","견과":"nuts","마카다미아":"macadamia",
+  "초콜릿":"chocolate","다크초콜릿":"dark chocolate","밀크초콜릿":"milk chocolate",
+  "카카오":"cacao","코코아":"cocoa","카카오닙스":"cacao nibs",
+  // 단맛
+  "캐러멜":"caramel","카라멜":"caramel","꿀":"honey","메이플시럽":"maple syrup","설탕":"sugar",
+  "흑설탕":"brown sugar","흑당":"muscovado","바닐라":"vanilla","토피":"toffee","당밀":"molasses",
+  "갈색설탕":"brown sugar","사탕수수":"sugarcane","누가":"nougat",
+  // 로스팅·향신료
+  "시나몬":"cinnamon","계피":"cinnamon","정향":"clove","후추":"pepper","넛맥":"nutmeg",
+  "카다멈":"cardamom","담배":"tobacco","시더":"cedar","구운빵":"toast","토스트":"toast",
+  "몰트":"malt","빵":"bread","비스킷":"biscuit","구운견과":"roasted nuts",
+  // 기타
+  "와인":"wine","레드와인":"red wine","위스키":"whiskey","럼":"rum","발효":"fermented",
+  "토마토":"tomato","흙내음":"earthy","흙":"earthy","버터":"butter","크림":"creamy",
+  "우유":"milk","요거트":"yogurt","치즈":"cheese"
+};
+/* 한국어 세부 노트 문자열 → 영어 변환 (쉼표·중점 등 구분자 유지) */
+function autoTranslateNotes(ko){
+  if(!ko)return "";
+  return String(ko).split(/([,，、·]\s*)/).map(function(seg){
+    if(/^[,，、·]/.test(seg))return seg;
+    var w=seg.trim();
+    if(!w)return seg;
+    if(FLAVOR_DICT[w])return FLAVOR_DICT[w];
+    /* 부분 포함 매칭 (긴 키 우선) */
+    var keys=Object.keys(FLAVOR_DICT).sort(function(a,b){return b.length-a.length;});
+    for(var i=0;i<keys.length;i++){
+      if(w.indexOf(keys[i])>=0)return FLAVOR_DICT[keys[i]];
+    }
+    return w; /* 사전에 없으면 원문 유지 */
+  }).join("");
+}
+/* 표시용: 한국어는 subnotes, 그 외 언어는 subnotesEn 우선 → 없으면 자동변환 */
+function subnoteText(b,l){
+  if(l==="ko")return b.subnotes||"";
+  if(b.subnotesEn&&b.subnotesEn.trim())return b.subnotesEn;
+  return autoTranslateNotes(b.subnotes||"");
+}
 /* 생산지 패턴 매핑 — 다국어 이름 + 지역/농장 키워드 */
 const COUNTRY_ALIAS = {};
 (function(){
@@ -284,13 +364,13 @@ const COUNTRY_ALIAS = {};
 })();
 
 const SEED = [
-  {id:"b1",brand:"모모스커피",name:"예가체프 코체레",nameEn:"Yirgacheffe Kochere",country:"에티오피아",process:"Washed",notes:["Floral","Fruity"],subnotes:"자스민, 베르가못, 레몬",price:28000,votes:14},
-  {id:"b2",brand:"프릳츠",name:"우일라 수프리모",nameEn:"Huila Supremo",country:"콜롬비아",process:"Washed",notes:["Sweet","Nutty/Cocoa"],subnotes:"캐러멜, 밀크초콜릿, 견과류",price:24000,votes:9},
-  {id:"b3",brand:"센터커피",name:"케냐 AA 니에리",nameEn:"Kenya AA Nyeri",country:"케냐",process:"Washed",notes:["Fruity","Sour/Fermented"],subnotes:"블랙커런트, 자몽, 토마토",price:32000,votes:11},
-  {id:"b4",brand:"테라로사",name:"세하도 내추럴",nameEn:"Cerrado Natural",country:"브라질",process:"Natural",notes:["Nutty/Cocoa","Sweet"],subnotes:"땅콩, 다크초콜릿, 흑설탕",price:19000,votes:6},
-  {id:"b5",brand:"커피리브레",name:"안티구아 SHB",nameEn:"Antigua SHB",country:"과테말라",process:"Washed",notes:["Roasted","Spices"],subnotes:"다크초콜릿, 시나몬, 오렌지",price:23000,votes:5},
-  {id:"b6",brand:"커피리브레",name:"수마트라 만델링",nameEn:"Sumatra Mandheling",country:"인도네시아",process:"Wet-hulled",notes:["Green/Vegetative","Spices"],subnotes:"허브, 시더, 흙내음",price:21000,votes:3},
-  {id:"b7",brand:"180커피로스터스",name:"게이샤 에스메랄다",nameEn:"Geisha Esmeralda",country:"파나마",process:"Washed",notes:["Floral","Fruity","Sweet"],subnotes:"자스민, 백도, 꿀",price:65000,votes:17}
+  {id:"b1",brand:"모모스커피",name:"예가체프 코체레",nameEn:"Yirgacheffe Kochere",country:"에티오피아",process:"Washed",notes:["Floral","Fruity"],subnotes:"자스민, 베르가못, 레몬",subnotesEn:"jasmine, bergamot, lemon",price:28000,votes:14},
+  {id:"b2",brand:"프릳츠",name:"우일라 수프리모",nameEn:"Huila Supremo",country:"콜롬비아",process:"Washed",notes:["Sweet","Nutty/Cocoa"],subnotes:"캐러멜, 밀크초콜릿, 견과류",subnotesEn:"caramel, milk chocolate, nuts",price:24000,votes:9},
+  {id:"b3",brand:"센터커피",name:"케냐 AA 니에리",nameEn:"Kenya AA Nyeri",country:"케냐",process:"Washed",notes:["Fruity","Sour/Fermented"],subnotes:"블랙커런트, 자몽, 토마토",subnotesEn:"blackcurrant, grapefruit, tomato",price:32000,votes:11},
+  {id:"b4",brand:"테라로사",name:"세하도 내추럴",nameEn:"Cerrado Natural",country:"브라질",process:"Natural",notes:["Nutty/Cocoa","Sweet"],subnotes:"땅콩, 다크초콜릿, 흑설탕",subnotesEn:"peanut, dark chocolate, brown sugar",price:19000,votes:6},
+  {id:"b5",brand:"커피리브레",name:"안티구아 SHB",nameEn:"Antigua SHB",country:"과테말라",process:"Washed",notes:["Roasted","Spices"],subnotes:"다크초콜릿, 시나몬, 오렌지",subnotesEn:"dark chocolate, cinnamon, orange",price:23000,votes:5},
+  {id:"b6",brand:"커피리브레",name:"수마트라 만델링",nameEn:"Sumatra Mandheling",country:"인도네시아",process:"Wet-hulled",notes:["Green/Vegetative","Spices"],subnotes:"허브, 시더, 흙내음",subnotesEn:"herbal, cedar, earthy",price:21000,votes:3},
+  {id:"b7",brand:"180커피로스터스",name:"게이샤 에스메랄다",nameEn:"Geisha Esmeralda",country:"파나마",process:"Washed",notes:["Floral","Fruity","Sweet"],subnotes:"자스민, 백도, 꿀",subnotesEn:"jasmine, white peach, honey",price:65000,votes:17}
 ];
 
 /* ============================================================
@@ -323,6 +403,7 @@ const T={
     logoNoBrands:"먼저 원두를 등록하면 브랜드 목록이 나타납니다.",
     logoSaved:"로고가 저장되었습니다",logoRemoved:"로고가 삭제되었습니다",logoErr:"PNG 이미지 파일만 올릴 수 있습니다",
     fNameEn:"원두명 (영어) — 선택",fNameEnPlaceholder:"예: Yirgacheffe Kochere",
+    fSubnotesEn:"세부 노트 (영어) — 선택 · 비우면 자동 변환",fSubnotesEnPlaceholder:"예: jasmine, bergamot, lemon",
     reqTitle:"카페 데니스에 원두 요청하기",
     reqDesc:"이런 원두를 카페 데니스에서 제공해 주세요! 원하는 생산지·가공법을 골라 요청을 남겨주세요.",
     reqCountry:"원하는 생산지",reqProcess:"원하는 가공법 (선택)",reqBrand:"원하는 브랜드 (선택)",
@@ -332,7 +413,15 @@ const T={
     reqTopTitle:"요청 많은 생산지",reqTopEmpty:"아직 요청이 없습니다. 첫 요청을 남겨보세요!",
     reqAdminTitle:"원두 요청 관리",reqByCountry:"생산지별 요청",reqByProcess:"가공법별 요청",
     reqListTitle:"개별 요청 목록",reqNone:"접수된 요청이 없습니다.",reqDeleted:"요청이 삭제되었습니다",
-    reqClearAll:"전체 삭제",reqClearConfirm:"모든 요청을 삭제할까요?",reqCount:"건"},
+    reqClearAll:"전체 삭제",reqClearConfirm:"모든 요청을 삭제할까요?",reqCount:"건",
+    bulkTitle:"기존 원두 영어 일괄 수정",
+    bulkDesc:"이미 등록된 원두의 영어명·영어 노트를 한 번에 정리할 수 있습니다.",
+    bulkAutoBtn:"영어 노트 일괄 자동 변환",
+    bulkAutoHint:"영어 노트가 비어 있는 원두에 향미 사전으로 영어 노트를 자동 입력합니다.",
+    bulkAutoDone:"개 원두의 영어 노트를 자동 변환했습니다",bulkAutoNone:"자동 변환할 빈 항목이 없습니다",
+    bulkTableHint:"각 칸을 직접 수정한 뒤 아래 '전체 저장'을 누르세요. 영어 노트를 비우면 화면에서 자동 변환됩니다.",
+    bulkColName:"원두명 (한국어)",bulkColNameEn:"원두명 (영어)",bulkColSubEn:"세부 노트 (영어)",
+    bulkSaveAll:"전체 저장",bulkSaved:"영어 정보를 일괄 저장했습니다"},
   en:{appTitle:"Cafe Dennis's Bean Note Log",appSubtitle:"Filter coffee bean data · Visitor popularity vote dashboard",
     tabDash:"Dashboard",tabReq:"Request",tabAdmin:"Admin",statBeans:"Beans",statVotes:"Total Votes",statTop:"Top Pick",statTopProc:"Top Process",unitKind:"",
     rankTitle:"Popularity Ranking",mapTitle:"Origin Map",mapClear:"Clear filter",
@@ -358,6 +447,7 @@ const T={
     logoNoBrands:"Register beans first and brand list will appear here.",
     logoSaved:"Logo saved",logoRemoved:"Logo removed",logoErr:"Only PNG image files are allowed",
     fNameEn:"Bean Name (English) — optional",fNameEnPlaceholder:"e.g. Yirgacheffe Kochere",
+    fSubnotesEn:"Detailed Notes (English) — optional · auto-converts if empty",fSubnotesEnPlaceholder:"e.g. jasmine, bergamot, lemon",
     reqTitle:"Request a Bean for Cafe Dennis",
     reqDesc:"Wish Cafe Dennis carried a certain bean? Pick the origin and process you'd like and send a request.",
     reqCountry:"Desired Origin",reqProcess:"Desired Process (optional)",reqBrand:"Desired Brand (optional)",
@@ -367,7 +457,15 @@ const T={
     reqTopTitle:"Most Requested Origins",reqTopEmpty:"No requests yet. Be the first!",
     reqAdminTitle:"Bean Request Management",reqByCountry:"Requests by Origin",reqByProcess:"Requests by Process",
     reqListTitle:"Individual Requests",reqNone:"No requests received.",reqDeleted:"Request deleted",
-    reqClearAll:"Clear all",reqClearConfirm:"Delete all requests?",reqCount:""},
+    reqClearAll:"Clear all",reqClearConfirm:"Delete all requests?",reqCount:"",
+    bulkTitle:"Bulk Edit English Info",
+    bulkDesc:"Organize English names and notes for already-registered beans all at once.",
+    bulkAutoBtn:"Auto-fill English Notes",
+    bulkAutoHint:"Auto-fills English notes via the flavor dictionary for beans with empty English notes.",
+    bulkAutoDone:" beans had English notes auto-filled",bulkAutoNone:"No empty items to auto-fill",
+    bulkTableHint:"Edit each field, then press 'Save All' below. Empty English notes are auto-converted on display.",
+    bulkColName:"Bean Name (Korean)",bulkColNameEn:"Bean Name (English)",bulkColSubEn:"Detailed Notes (English)",
+    bulkSaveAll:"Save All",bulkSaved:"English info saved in bulk"},
   zh:{appTitle:"丹尼斯咖啡馆 咖啡豆笔记日志",appSubtitle:"滤泡咖啡豆数据 · 访客人气投票仪表板",
     tabDash:"仪表板",tabReq:"请求",tabAdmin:"管理员",statBeans:"登记咖啡豆",statVotes:"总投票数",statTop:"人气第一",statTopProc:"热门处理法",unitKind:"种",
     rankTitle:"人气投票排行",mapTitle:"产地地图",mapClear:"清除筛选",
@@ -393,6 +491,7 @@ const T={
     logoNoBrands:"先登记咖啡豆后，品牌列表将显示在此。",
     logoSaved:"Logo 已保存",logoRemoved:"Logo 已删除",logoErr:"只能上传 PNG 图片文件",
     fNameEn:"咖啡豆名称（英文）— 选填",fNameEnPlaceholder:"例：Yirgacheffe Kochere",
+    fSubnotesEn:"详细风味（英文）— 选填 · 留空则自动转换",fSubnotesEnPlaceholder:"例：jasmine, bergamot, lemon",
     reqTitle:"向丹尼斯咖啡馆请求咖啡豆",
     reqDesc:"希望丹尼斯咖啡馆提供某款咖啡豆？请选择您想要的产地和处理法并提交请求。",
     reqCountry:"想要的产地",reqProcess:"想要的处理法（选填）",reqBrand:"想要的品牌（选填）",
@@ -402,7 +501,15 @@ const T={
     reqTopTitle:"请求最多的产地",reqTopEmpty:"还没有请求，来当第一个吧！",
     reqAdminTitle:"咖啡豆请求管理",reqByCountry:"按产地统计",reqByProcess:"按处理法统计",
     reqListTitle:"单个请求列表",reqNone:"没有收到请求。",reqDeleted:"请求已删除",
-    reqClearAll:"全部删除",reqClearConfirm:"删除所有请求？",reqCount:" 条"},
+    reqClearAll:"全部删除",reqClearConfirm:"删除所有请求？",reqCount:" 条",
+    bulkTitle:"批量修改已有咖啡豆英文信息",
+    bulkDesc:"可一次性整理已登记咖啡豆的英文名称和英文风味。",
+    bulkAutoBtn:"批量自动转换英文风味",
+    bulkAutoHint:"对英文风味为空的咖啡豆，用风味词典自动填入英文风味。",
+    bulkAutoDone:" 个咖啡豆的英文风味已自动转换",bulkAutoNone:"没有可自动转换的空白项",
+    bulkTableHint:"修改各栏后点击下方'全部保存'。英文风味留空时在显示时自动转换。",
+    bulkColName:"咖啡豆名称（韩文）",bulkColNameEn:"咖啡豆名称（英文）",bulkColSubEn:"详细风味（英文）",
+    bulkSaveAll:"全部保存",bulkSaved:"英文信息已批量保存"},
   th:{appTitle:"บันทึกโน้ตเมล็ดกาแฟ คาเฟ่เดนนิส",appSubtitle:"ข้อมูลเมล็ดกาแฟดริป · แดชบอร์ดโหวตความนิยม",
     tabDash:"แดชบอร์ด",tabReq:"คำขอ",tabAdmin:"ผู้ดูแล",statBeans:"เมล็ดที่ลงทะเบียน",statVotes:"โหวตทั้งหมด",statTop:"อันดับ 1",statTopProc:"กระบวนการยอดนิยม",unitKind:" ชนิด",
     rankTitle:"อันดับการโหวต",mapTitle:"แผนที่แหล่งผลิต",mapClear:"ล้างตัวกรอง",
@@ -428,6 +535,7 @@ const T={
     logoNoBrands:"ลงทะเบียนเมล็ดกาแฟก่อน แล้วรายการแบรนด์จะปรากฏที่นี่",
     logoSaved:"บันทึกโลโก้แล้ว",logoRemoved:"ลบโลโก้แล้ว",logoErr:"อัปโหลดได้เฉพาะไฟล์ภาพ PNG เท่านั้น",
     fNameEn:"ชื่อเมล็ดกาแฟ (อังกฤษ) — ไม่บังคับ",fNameEnPlaceholder:"เช่น Yirgacheffe Kochere",
+    fSubnotesEn:"โน้ตโดยละเอียด (อังกฤษ) — ไม่บังคับ · เว้นว่างจะแปลอัตโนมัติ",fSubnotesEnPlaceholder:"เช่น jasmine, bergamot, lemon",
     reqTitle:"ขอเมล็ดกาแฟกับคาเฟ่เดนนิส",
     reqDesc:"อยากให้คาเฟ่เดนนิสมีเมล็ดกาแฟแบบไหน? เลือกแหล่งผลิตและกระบวนการที่ต้องการแล้วส่งคำขอ",
     reqCountry:"แหล่งผลิตที่ต้องการ",reqProcess:"กระบวนการที่ต้องการ (ไม่บังคับ)",reqBrand:"แบรนด์ที่ต้องการ (ไม่บังคับ)",
@@ -437,7 +545,15 @@ const T={
     reqTopTitle:"แหล่งผลิตที่ถูกขอมากที่สุด",reqTopEmpty:"ยังไม่มีคำขอ มาเป็นคนแรกกันเถอะ!",
     reqAdminTitle:"จัดการคำขอเมล็ดกาแฟ",reqByCountry:"คำขอตามแหล่งผลิต",reqByProcess:"คำขอตามกระบวนการ",
     reqListTitle:"รายการคำขอแต่ละรายการ",reqNone:"ไม่มีคำขอที่ได้รับ",reqDeleted:"ลบคำขอแล้ว",
-    reqClearAll:"ลบทั้งหมด",reqClearConfirm:"ลบคำขอทั้งหมด?",reqCount:" รายการ"}
+    reqClearAll:"ลบทั้งหมด",reqClearConfirm:"ลบคำขอทั้งหมด?",reqCount:" รายการ",
+    bulkTitle:"แก้ไขข้อมูลภาษาอังกฤษของเมล็ดที่มีอยู่",
+    bulkDesc:"จัดระเบียบชื่อและโน้ตภาษาอังกฤษของเมล็ดที่ลงทะเบียนแล้วในครั้งเดียว",
+    bulkAutoBtn:"แปลงโน้ตอังกฤษอัตโนมัติทั้งหมด",
+    bulkAutoHint:"เติมโน้ตภาษาอังกฤษอัตโนมัติด้วยพจนานุกรมรสชาติ สำหรับเมล็ดที่โน้ตอังกฤษว่าง",
+    bulkAutoDone:" เมล็ดถูกเติมโน้ตอังกฤษอัตโนมัติ",bulkAutoNone:"ไม่มีรายการว่างให้แปลงอัตโนมัติ",
+    bulkTableHint:"แก้ไขแต่ละช่องแล้วกด 'บันทึกทั้งหมด' ด้านล่าง โน้ตอังกฤษที่ว่างจะแปลงอัตโนมัติเมื่อแสดง",
+    bulkColName:"ชื่อเมล็ด (เกาหลี)",bulkColNameEn:"ชื่อเมล็ด (อังกฤษ)",bulkColSubEn:"โน้ตโดยละเอียด (อังกฤษ)",
+    bulkSaveAll:"บันทึกทั้งหมด",bulkSaved:"บันทึกข้อมูลภาษาอังกฤษทั้งหมดแล้ว"}
 };
 
 /* ============================================================
@@ -455,8 +571,9 @@ const state={
   myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
   tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"",
   authed:false, editId:null,
-  form:{brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""},
+  form:{brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",subnotesEn:"",price:""},
   reqForm:{country:"",process:"",brand:"",comment:""},
+  bulkEdits:{},
   flash:"", patText:"", patMsg:"", fbReady:false
 };
 const t=k=>(T[state.lang]&&T[state.lang][k])||T.ko[k];
@@ -602,13 +719,17 @@ function parsePattern(text){
     let nm=f[1], nmEn="";
     const slash=f[1].indexOf("/");
     if(slash>=0){nm=f[1].slice(0,slash).trim();nmEn=f[1].slice(slash+1).trim();}
+    /* 세부노트 칸도 "한국어 / English" 분리 지원, 없으면 자동 변환 */
+    let sub=f[5]||"", subEn="";
+    const slash2=sub.indexOf("/");
+    if(slash2>=0){const a=sub;sub=a.slice(0,slash2).trim();subEn=a.slice(slash2+1).trim();}
     beans.push({
       id:"b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
       brand:f[0], name:nm, nameEn:nmEn,
       country:mapCountry(f[2]||""),
       process:mapProcess(f[3]||""),
       notes:mapNotes(f[4]||""),
-      subnotes:f[5]||"",
+      subnotes:sub, subnotesEn:subEn,
       price:Number((f[6]||"").replace(/[^\d]/g,""))||0,
       votes:0
     });
@@ -786,7 +907,7 @@ function renderDash(){
        '<div class="notetags">'+
        (b.notes||[]).map(n=>'<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>').join("")+
        '</div>'+
-       (b.subnotes?'<div class="subnote">&#8220;'+esc(b.subnotes)+'&#8221;</div>':"")+
+       (subnoteText(b,l)?'<div class="subnote">&#8220;'+esc(subnoteText(b,l))+'&#8221;</div>':"")+
        '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
        '<button class="votebtn'+(voted?" voted":"")+'" onclick="window.vote(\''+b.id+'\')">'+
        (voted?"&#10084;":"&#9825;")+' '+(b.votes||0)+'</button></div>'+
@@ -904,6 +1025,10 @@ function renderAdmin(){
   }
   h+='</div>';
 
+  /* 기존 원두 영어 일괄 수정 */
+  try{ h+=renderBulkEdit(); }
+  catch(e){ console.error("renderBulkEdit error:",e); }
+
   /* 원두 요청 관리 */
   try{ h+=renderRequestAdmin(); }
   catch(e){ console.error("renderRequestAdmin error:",e); }
@@ -936,6 +1061,7 @@ function renderAdmin(){
        return '<button class="notebtn" style="'+(on?"background:"+NOTE_COLOR[n]+"33;color:"+NOTE_COLOR[n]+";border-color:"+NOTE_COLOR[n]+"77":"")+'" onclick="window.toggleNote(\''+n+'\')">'+esc(noteLabel(n,l))+'</button>';
      }).join("")+'</div></div>'+
      '<div class="span2">'+fld(t("fSubnotes"),'<input class="fi" value="'+esc(f.subnotes)+'" placeholder="'+esc(t("fSubPlaceholder"))+'" oninput="window.fForm(\'subnotes\',this.value)"/>')+'</div>'+
+     '<div class="span2">'+fld(t("fSubnotesEn"),'<input class="fi" value="'+esc(f.subnotesEn||"")+'" placeholder="'+esc(t("fSubnotesEnPlaceholder"))+'" oninput="window.fForm(\'subnotesEn\',this.value)"/>')+'</div>'+
      fld(t("fPrice"),'<input class="fi" type="number" value="'+esc(f.price)+'" oninput="window.fForm(\'price\',this.value)"/>')+
      '</div>'+
      '<div style="display:flex;gap:8px;margin-top:12px">'+
@@ -991,7 +1117,7 @@ window.saveForm=()=>{
   if(!f.brand.trim()||!f.name.trim()){flash(t("msgNeedName"));return;}
   const rec={brand:f.brand.trim(),name:f.name.trim(),nameEn:(f.nameEn||"").trim(),
     country:f.country,process:f.process,
-    notes:f.notes.slice(),subnotes:f.subnotes,price:Number(f.price)||0};
+    notes:f.notes.slice(),subnotes:f.subnotes,subnotesEn:(f.subnotesEn||"").trim(),price:Number(f.price)||0};
   if(state.editId){
     saveBeans(state.beans.map(b=>b.id===state.editId?Object.assign({},b,rec):b));
     flash(t("msgEdited"));
@@ -1001,20 +1127,20 @@ window.saveForm=()=>{
     flash(t("msgAdded"));
   }
   state.editId=null;
-  state.form={brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""};
+  state.form={brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",subnotesEn:"",price:""};
   render();
 };
 window.editBean=id=>{
   const b=state.beans.find(x=>x.id===id);if(!b)return;
   state.editId=id;
   state.form={brand:b.brand,name:b.name,nameEn:b.nameEn||"",country:b.country,process:b.process,
-    notes:(b.notes||[]).slice(),subnotes:b.subnotes||"",price:b.price||""};
+    notes:(b.notes||[]).slice(),subnotes:b.subnotes||"",subnotesEn:b.subnotesEn||"",price:b.price||""};
   state.tab="admin";render();
   window.scrollTo({top:0,behavior:"smooth"});
 };
 window.cancelEdit=()=>{
   state.editId=null;
-  state.form={brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",price:""};
+  state.form={brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",subnotesEn:"",price:""};
   render();
 };
 window.delBean=id=>{
@@ -1063,6 +1189,41 @@ window.clearRequests=()=>{
   if(!ok)return;
   saveRequests([]);
   flash(t("reqDeleted"));
+};
+/* ---------- 영어 일괄 수정 핸들러 ---------- */
+window.bulkField=(id,key,val)=>{
+  /* 입력 중에는 버퍼에만 저장 (저장 버튼 누를 때 일괄 반영) */
+  if(!state.bulkEdits[id])state.bulkEdits[id]={};
+  state.bulkEdits[id][key]=val;
+};
+window.bulkSaveAll=()=>{
+  const edits=state.bulkEdits||{};
+  const next=state.beans.map(b=>{
+    const e=edits[b.id];
+    if(!e)return b;
+    const merged=Object.assign({},b);
+    if(typeof e.nameEn==="string")merged.nameEn=e.nameEn.trim();
+    if(typeof e.subnotesEn==="string")merged.subnotesEn=e.subnotesEn.trim();
+    return merged;
+  });
+  state.bulkEdits={};
+  saveBeans(next);
+  flash(t("bulkSaved"));
+};
+window.bulkAutoNotes=()=>{
+  let n=0;
+  const next=state.beans.map(b=>{
+    /* 영어 노트가 비어 있고 한국어 노트가 있으면 자동 변환 */
+    if((!b.subnotesEn||!b.subnotesEn.trim())&&b.subnotes&&b.subnotes.trim()){
+      const conv=autoTranslateNotes(b.subnotes);
+      if(conv&&conv.trim()){n++;return Object.assign({},b,{subnotesEn:conv});}
+    }
+    return b;
+  });
+  if(!n){flash(t("bulkAutoNone"));return;}
+  state.bulkEdits={};
+  saveBeans(next);
+  flash(n+t("bulkAutoDone"));
 };
 window.uploadLogo=(brand,e)=>{
   const file=e.target.files&&e.target.files[0];
