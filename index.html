@@ -814,7 +814,8 @@ function render(){
      '</div>';
 
   if(state.tab==="dash") h+=safeRender(renderDash);
-  else if(state.tab==="req") h+=safeRender(renderRequestCard);
+  else if(state.tab==="req") h+=(typeof renderRequestCard==="function")?safeRender(renderRequestCard):
+    '<div class="card" style="padding:16px;color:#cf954f;font-size:12px">&#9888; 요청 모듈 로드 실패</div>';
   else h+=safeRender(renderAdmin);
 
   app.innerHTML=h;
@@ -923,6 +924,33 @@ function statCard(ico,lbl,val,sub){
 }
 
 /* ===== 원두 요청 카드 (방문자용) ===== */
+function renderBulkEdit(){
+  var l=state.lang;
+  var beans=state.beans||[];
+  var h='<div class="card" style="padding:16px;margin-bottom:16px">'+
+    '<h2 class="sec" style="margin-bottom:4px">&#127760; '+esc(t("bulkTitle"))+'</h2>'+
+    '<p class="muted" style="margin-bottom:10px">'+esc(t("bulkDesc"))+'</p>';
+  h+='<div style="background:#2a2320;border:1px solid #6b4a32;border-radius:9px;padding:10px;margin-bottom:12px">'+
+     '<button class="btn amber" onclick="window.bulkAutoNotes()">&#10024; '+esc(t("bulkAutoBtn"))+'</button>'+
+     '<p class="muted" style="margin-top:6px">'+esc(t("bulkAutoHint"))+'</p></div>';
+  if(!beans.length){h+='</div>';return h;}
+  h+='<p class="muted" style="margin-bottom:6px">'+esc(t("bulkTableHint"))+'</p>';
+  h+='<div class="bulkhead"><span>'+esc(t("bulkColName"))+'</span>'+
+     '<span>'+esc(t("bulkColNameEn"))+'</span><span>'+esc(t("bulkColSubEn"))+'</span></div>';
+  beans.forEach(function(b){
+    h+='<div class="bulkrow">'+
+       '<div class="konm" title="'+esc(b.name)+'">'+esc(b.name)+'</div>'+
+       '<input value="'+esc(b.nameEn||"")+'" placeholder="'+esc(t("fNameEnPlaceholder"))+'" '+
+         'oninput="window.bulkField(\''+b.id+'\',\'nameEn\',this.value)"/>'+
+       '<input value="'+esc(b.subnotesEn||"")+'" placeholder="'+esc(autoTranslateNotes(b.subnotes||""))+'" '+
+         'oninput="window.bulkField(\''+b.id+'\',\'subnotesEn\',this.value)"/>'+
+       '</div>';
+  });
+  h+='<button class="btn" style="margin-top:10px" onclick="window.bulkSaveAll()">&#128190; '+esc(t("bulkSaveAll"))+'</button>';
+  h+='</div>';
+  return h;
+}
+
 function renderRequestCard(){
   var l=state.lang, rf=state.reqForm||{country:"",process:"",brand:"",comment:""};
   var reqs=state.requests||[];
@@ -1026,12 +1054,12 @@ function renderAdmin(){
   h+='</div>';
 
   /* 기존 원두 영어 일괄 수정 */
-  try{ h+=renderBulkEdit(); }
-  catch(e){ console.error("renderBulkEdit error:",e); }
+  h+=(typeof renderBulkEdit==="function")?safeRender(renderBulkEdit):"";
 
   /* 원두 요청 관리 */
-  try{ h+=renderRequestAdmin(); }
-  catch(e){ console.error("renderRequestAdmin error:",e); }
+  h+=(typeof renderRequestAdmin==="function")?safeRender(renderRequestAdmin):
+     '<div class="card" style="padding:16px;margin-bottom:16px;color:#cf954f;font-size:12px">'+
+     '&#9888; 원두 요청 관리 모듈을 불러오지 못했습니다. (renderRequestAdmin 미정의)</div>';
 
   /* 패턴 입력 */
   h+='<div class="card" style="padding:16px;margin-bottom:16px;background:linear-gradient(135deg,#252021,#1a1718);border-color:#6b4a32">'+
