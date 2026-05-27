@@ -1105,10 +1105,68 @@ function renderAdmin(){
   /* 기존 원두 영어 일괄 수정 */
   h+=(typeof renderBulkEdit==="function")?safeRender(renderBulkEdit):"";
 
-  /* 원두 요청 관리 */
-  h+=(typeof window.renderRequestAdmin==="function")?safeRender(window.renderRequestAdmin):
-     '<div class="card" style="padding:16px;margin-bottom:16px;color:#cf954f;font-size:12px">'+
-     '&#9888; 원두 요청 관리 모듈을 불러오지 못했습니다. (renderRequestAdmin 미정의)</div>';
+  /* ===== 원두 요청 관리 (인라인) ===== */
+  (function(){
+    var reqs=(state.requests||[]).slice();
+    reqs.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+    h+='<div class="card" style="padding:16px;margin-bottom:16px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">';
+    h+='<h2 class="sec">&#9993; '+esc(t("reqAdminTitle"))+' ('+reqs.length+esc(t("reqCount"))+')</h2>';
+    if(reqs.length){
+      h+='<button class="btn ghost" onclick="window.clearRequests()">&#128465; '+esc(t("reqClearAll"))+'</button>';
+    }
+    h+='</div>';
+    if(reqs.length===0){
+      h+='<p class="muted">'+esc(t("reqNone"))+'</p></div>';
+      return;
+    }
+    var cm={},pm={},i,k;
+    for(i=0;i<reqs.length;i++){
+      if(reqs[i].country){cm[reqs[i].country]=(cm[reqs[i].country]||0)+1;}
+      if(reqs[i].process){pm[reqs[i].process]=(pm[reqs[i].process]||0)+1;}
+    }
+    var ce=[],pe=[];
+    for(k in cm){if(cm.hasOwnProperty(k)){ce.push([k,cm[k]]);}}
+    for(k in pm){if(pm.hasOwnProperty(k)){pe.push([k,pm[k]]);}}
+    ce.sort(function(a,b){return b[1]-a[1];});
+    pe.sort(function(a,b){return b[1]-a[1];});
+    var cmax=1,pmax=1;
+    for(i=0;i<ce.length;i++){if(ce[i][1]>cmax)cmax=ce[i][1];}
+    for(i=0;i<pe.length;i++){if(pe[i][1]>pmax)pmax=pe[i][1];}
+    h+='<div class="grid2" style="margin-bottom:12px">';
+    h+='<div><div style="font-size:12px;font-weight:700;color:#6f7276;margin-bottom:6px">&#127757; '+esc(t("reqByCountry"))+'</div>';
+    for(i=0;i<ce.length;i++){
+      h+='<div class="reqstat"><span class="nm">'+esc(countryName(ce[i][0],state.lang))+'</span>';
+      h+='<span class="tk"><span class="fl2" style="width:'+Math.round(ce[i][1]/cmax*100)+'%"></span></span>';
+      h+='<span class="ct">'+ce[i][1]+'</span></div>';
+    }
+    h+='</div>';
+    h+='<div><div style="font-size:12px;font-weight:700;color:#6f7276;margin-bottom:6px">&#129514; '+esc(t("reqByProcess"))+'</div>';
+    if(pe.length===0){h+='<p class="muted">&#8212;</p>';}
+    for(i=0;i<pe.length;i++){
+      h+='<div class="reqstat"><span class="nm">'+esc(procLabel(pe[i][0],state.lang))+'</span>';
+      h+='<span class="tk"><span class="fl2" style="width:'+Math.round(pe[i][1]/pmax*100)+'%"></span></span>';
+      h+='<span class="ct">'+pe[i][1]+'</span></div>';
+    }
+    h+='</div></div>';
+    h+='<div style="font-size:12px;font-weight:700;color:#6f7276;margin:10px 0 6px">'+esc(t("reqListTitle"))+'</div>';
+    for(i=0;i<reqs.length;i++){
+      var rq=reqs[i];
+      var parts=[countryName(rq.country,state.lang)];
+      if(rq.process){parts.push(procLabel(rq.process,state.lang));}
+      if(rq.brand){parts.push(rq.brand);}
+      var dt=rq.ts?new Date(rq.ts).toLocaleString():"";
+      h+='<div class="reqitem">';
+      h+='<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">';
+      h+='<span class="meta">&#127757; '+esc(parts.join(" &#183; "))+'</span>';
+      h+='<button class="icobtn" style="color:#c0524e;width:24px;height:24px" onclick="window.delRequest(\''+rq.id+'\')">&#128465;</button>';
+      h+='</div>';
+      if(rq.comment){h+='<div class="cmt">&#8220;'+esc(rq.comment)+'&#8221;</div>';}
+      if(dt){h+='<div class="dt">'+esc(dt)+'</div>';}
+      h+='</div>';
+    }
+    h+='</div>';
+  })();
 
   /* 패턴 입력 */
   h+='<div class="card" style="padding:16px;margin-bottom:16px;background:linear-gradient(135deg,#252021,#1a1718);border-color:#6b4a32">'+
