@@ -79,6 +79,24 @@
     display:flex;flex-direction:column;gap:10px;}
   .bean .brand{font-size:11px;font-weight:700;color:var(--metalDark);letter-spacing:.3px;}
   .bean .bname{font-size:16px;font-weight:800;line-height:1.2;}
+  /* 판매중 뱃지 / 토글 */
+  .nowbadge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;
+    padding:2px 7px;border-radius:999px;background:#1e3a24;color:#5fd17e;
+    border:1px solid #2f6b3f;letter-spacing:.3px;}
+  .nowdot{width:6px;height:6px;border-radius:50%;background:#5fd17e;display:inline-block;}
+  .bean.dim{opacity:.55;}
+  .saletoggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+    padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--panel);}
+  .saletoggle.on{background:#1e3a24;color:#5fd17e;border-color:#2f6b3f;}
+  .saletoggle.off{color:var(--metalDark);}
+  .swdot{width:28px;height:16px;border-radius:999px;background:var(--border);
+    position:relative;transition:background .15s;flex-shrink:0;}
+  .swdot.on{background:#2f6b3f;}
+  .swdot::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;
+    border-radius:50%;background:var(--ink);transition:left .15s;}
+  .swdot.on::after{left:14px;}
+  .nowsec{background:linear-gradient(135deg,#1e3a24,#161d18);border:1px solid #2f6b3f;
+    border-radius:14px;padding:16px;margin-bottom:20px;}
   .brandrow{display:flex;align-items:center;gap:8px;}
   .blogo{width:34px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0;
     background:var(--panel2);border:1px solid var(--border);}
@@ -364,13 +382,13 @@ const COUNTRY_ALIAS = {};
 })();
 
 const SEED = [
-  {id:"b1",brand:"모모스커피",name:"예가체프 코체레",nameEn:"Yirgacheffe Kochere",country:"에티오피아",process:"Washed",notes:["Floral","Fruity"],subnotes:"자스민, 베르가못, 레몬",subnotesEn:"jasmine, bergamot, lemon",price:28000,votes:14},
-  {id:"b2",brand:"프릳츠",name:"우일라 수프리모",nameEn:"Huila Supremo",country:"콜롬비아",process:"Washed",notes:["Sweet","Nutty/Cocoa"],subnotes:"캐러멜, 밀크초콜릿, 견과류",subnotesEn:"caramel, milk chocolate, nuts",price:24000,votes:9},
-  {id:"b3",brand:"센터커피",name:"케냐 AA 니에리",nameEn:"Kenya AA Nyeri",country:"케냐",process:"Washed",notes:["Fruity","Sour/Fermented"],subnotes:"블랙커런트, 자몽, 토마토",subnotesEn:"blackcurrant, grapefruit, tomato",price:32000,votes:11},
-  {id:"b4",brand:"테라로사",name:"세하도 내추럴",nameEn:"Cerrado Natural",country:"브라질",process:"Natural",notes:["Nutty/Cocoa","Sweet"],subnotes:"땅콩, 다크초콜릿, 흑설탕",subnotesEn:"peanut, dark chocolate, brown sugar",price:19000,votes:6},
-  {id:"b5",brand:"커피리브레",name:"안티구아 SHB",nameEn:"Antigua SHB",country:"과테말라",process:"Washed",notes:["Roasted","Spices"],subnotes:"다크초콜릿, 시나몬, 오렌지",subnotesEn:"dark chocolate, cinnamon, orange",price:23000,votes:5},
-  {id:"b6",brand:"커피리브레",name:"수마트라 만델링",nameEn:"Sumatra Mandheling",country:"인도네시아",process:"Wet-hulled",notes:["Green/Vegetative","Spices"],subnotes:"허브, 시더, 흙내음",subnotesEn:"herbal, cedar, earthy",price:21000,votes:3},
-  {id:"b7",brand:"180커피로스터스",name:"게이샤 에스메랄다",nameEn:"Geisha Esmeralda",country:"파나마",process:"Washed",notes:["Floral","Fruity","Sweet"],subnotes:"자스민, 백도, 꿀",subnotesEn:"jasmine, white peach, honey",price:65000,votes:17}
+  {id:"b1",brand:"모모스커피",name:"예가체프 코체레",nameEn:"Yirgacheffe Kochere",country:"에티오피아",process:"Washed",notes:["Floral","Fruity"],subnotes:"자스민, 베르가못, 레몬",subnotesEn:"jasmine, bergamot, lemon",price:28000,votes:14,onSale:true},
+  {id:"b2",brand:"프릳츠",name:"우일라 수프리모",nameEn:"Huila Supremo",country:"콜롬비아",process:"Washed",notes:["Sweet","Nutty/Cocoa"],subnotes:"캐러멜, 밀크초콜릿, 견과류",subnotesEn:"caramel, milk chocolate, nuts",price:24000,votes:9,onSale:true},
+  {id:"b3",brand:"센터커피",name:"케냐 AA 니에리",nameEn:"Kenya AA Nyeri",country:"케냐",process:"Washed",notes:["Fruity","Sour/Fermented"],subnotes:"블랙커런트, 자몽, 토마토",subnotesEn:"blackcurrant, grapefruit, tomato",price:32000,votes:11,onSale:true},
+  {id:"b4",brand:"테라로사",name:"세하도 내추럴",nameEn:"Cerrado Natural",country:"브라질",process:"Natural",notes:["Nutty/Cocoa","Sweet"],subnotes:"땅콩, 다크초콜릿, 흑설탕",subnotesEn:"peanut, dark chocolate, brown sugar",price:19000,votes:6,onSale:false},
+  {id:"b5",brand:"커피리브레",name:"안티구아 SHB",nameEn:"Antigua SHB",country:"과테말라",process:"Washed",notes:["Roasted","Spices"],subnotes:"다크초콜릿, 시나몬, 오렌지",subnotesEn:"dark chocolate, cinnamon, orange",price:23000,votes:5,onSale:true},
+  {id:"b6",brand:"커피리브레",name:"수마트라 만델링",nameEn:"Sumatra Mandheling",country:"인도네시아",process:"Wet-hulled",notes:["Green/Vegetative","Spices"],subnotes:"허브, 시더, 흙내음",subnotesEn:"herbal, cedar, earthy",price:21000,votes:3,onSale:false},
+  {id:"b7",brand:"180커피로스터스",name:"게이샤 에스메랄다",nameEn:"Geisha Esmeralda",country:"파나마",process:"Washed",notes:["Floral","Fruity","Sweet"],subnotes:"자스민, 백도, 꿀",subnotesEn:"jasmine, white peach, honey",price:65000,votes:17,onSale:true}
 ];
 
 /* ============================================================
@@ -384,6 +402,8 @@ const T={
     mapHint:"점을 누르면 해당 생산지 원두만 볼 수 있어요. 점 크기는 받은 좋아요 수에 비례합니다.",
     filterLabel:"정렬",sVotes:"인기순",sBrand:"브랜드",sCountry:"생산지",sProcess:"가공법",sPrice:"금액",sNotes:"노트",
     procAll:"가공법 전체",noBeans:"조건에 맞는 원두가 없습니다.",
+    nowTitle:"현재 판매 중인 원두",nowBadge:"판매중",nowEmpty:"현재 판매 중인 원두가 없습니다.",
+    nowFilter:"판매중만",onSale:"판매중",offSale:"판매종료",
     adminAuth:"관리자 인증",adminPwHint:"비밀번호를 입력하세요",adminEnter:"입장",adminPwWrong:"비밀번호가 올바르지 않습니다",
     backupTitle:"데이터 백업 / 업로드",backupDesc:"원두·투표 데이터는 Firebase에 저장되어 모든 방문자가 공유합니다. 정기적으로 백업하세요.",
     btnExport:"백업 (JSON 내보내기)",btnImport:"업로드 (JSON 가져오기)",
@@ -428,6 +448,8 @@ const T={
     mapHint:"Tap a dot to see beans from that origin. Dot size reflects total likes.",
     filterLabel:"Sort",sVotes:"Popular",sBrand:"Brand",sCountry:"Origin",sProcess:"Process",sPrice:"Price",sNotes:"Notes",
     procAll:"All processes",noBeans:"No beans match the filter.",
+    nowTitle:"Now Serving",nowBadge:"On Sale",nowEmpty:"No beans currently on sale.",
+    nowFilter:"On sale only",onSale:"On Sale",offSale:"Sold Out",
     adminAuth:"Admin Login",adminPwHint:"Enter the password",adminEnter:"Enter",adminPwWrong:"Incorrect password",
     backupTitle:"Backup / Upload Data",backupDesc:"Bean and vote data is stored in Firebase and shared by all visitors. Back up regularly.",
     btnExport:"Backup (Export JSON)",btnImport:"Upload (Import JSON)",
@@ -472,6 +494,8 @@ const T={
     mapHint:"点击圆点可只看该产地的咖啡豆。圆点大小与获赞数成正比。",
     filterLabel:"排序",sVotes:"人气",sBrand:"品牌",sCountry:"产地",sProcess:"处理法",sPrice:"价格",sNotes:"风味",
     procAll:"全部处理法",noBeans:"没有符合条件的咖啡豆。",
+    nowTitle:"当前供应咖啡豆",nowBadge:"在售",nowEmpty:"当前没有在售的咖啡豆。",
+    nowFilter:"仅看在售",onSale:"在售",offSale:"已售罄",
     adminAuth:"管理员登录",adminPwHint:"请输入密码",adminEnter:"进入",adminPwWrong:"密码不正确",
     backupTitle:"数据备份 / 上传",backupDesc:"咖啡豆和投票数据存储在 Firebase，由所有访客共享。请定期备份。",
     btnExport:"备份（导出 JSON）",btnImport:"上传（导入 JSON）",
@@ -516,6 +540,8 @@ const T={
     mapHint:"แตะจุดเพื่อดูเมล็ดจากแหล่งนั้น ขนาดจุดแปรผันตามจำนวนไลก์",
     filterLabel:"เรียงตาม",sVotes:"ยอดนิยม",sBrand:"แบรนด์",sCountry:"แหล่งผลิต",sProcess:"กระบวนการ",sPrice:"ราคา",sNotes:"โน้ต",
     procAll:"ทุกกระบวนการ",noBeans:"ไม่มีเมล็ดที่ตรงกับตัวกรอง",
+    nowTitle:"กำลังจำหน่าย",nowBadge:"มีจำหน่าย",nowEmpty:"ขณะนี้ไม่มีเมล็ดที่จำหน่าย",
+    nowFilter:"เฉพาะที่จำหน่าย",onSale:"มีจำหน่าย",offSale:"หมดแล้ว",
     adminAuth:"เข้าสู่ระบบผู้ดูแล",adminPwHint:"กรอกรหัสผ่าน",adminEnter:"เข้าสู่ระบบ",adminPwWrong:"รหัสผ่านไม่ถูกต้อง",
     backupTitle:"สำรอง / อัปโหลดข้อมูล",backupDesc:"ข้อมูลเมล็ดและการโหวตเก็บใน Firebase และแชร์กับผู้เข้าชมทุกคน กรุณาสำรองข้อมูลเป็นประจำ",
     btnExport:"สำรองข้อมูล (ส่งออก JSON)",btnImport:"อัปโหลด (นำเข้า JSON)",
@@ -569,7 +595,7 @@ const beanName=(b,l)=>(l==="ko")?(b.name||""):((b.nameEn&&b.nameEn.trim())?b.nam
 const state={
   beans:null, brandLogos:{}, requests:[], lang:localStorage.getItem("cdn-lang")||"ko",
   myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
-  tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"",
+  tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"", saleFilter:false,
   authed:false, editId:null,
   form:{brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",subnotesEn:"",price:""},
   reqForm:{country:"",process:"",brand:"",comment:""},
@@ -844,6 +870,20 @@ function renderDash(){
     statCard("&#129514;",t("statTopProc"),topProc?esc(procLabel(topProc[0],l)):"-",topProc?"&#9829;"+topProc[1]:"")+
     '</div>';
 
+  /* ===== 현재 판매 중인 원두 ===== */
+  const onSaleBeans=beans.filter(b=>b.onSale!==false);
+  h+='<div class="nowsec">'+
+     '<h2 class="sec" style="margin-bottom:10px;color:#5fd17e">&#9749; '+esc(t("nowTitle"))+
+     ' <span style="color:#3f8a52;font-weight:600">('+onSaleBeans.length+t("unitKind")+')</span></h2>';
+  if(!onSaleBeans.length){
+    h+='<p class="muted">'+esc(t("nowEmpty"))+'</p>';
+  }else{
+    h+='<div class="beans" style="padding-bottom:0">';
+    onSaleBeans.forEach(b=>{ h+=beanCardHtml(b,l); });
+    h+='</div>';
+  }
+  h+='</div>';
+
   /* 랭킹 차트 */
   const cd=[...beans].sort((a,b)=>(b.votes||0)-(a.votes||0)).slice(0,8);
   const max=Math.max(1,...cd.map(b=>b.votes||0));
@@ -874,13 +914,16 @@ function renderDash(){
   h+='<div class="card" style="padding:14px;margin-bottom:16px"><div class="sortbar">'+
      '<span style="font-size:12px;font-weight:700;color:#6f7276;margin-right:4px">'+esc(t("filterLabel"))+'</span>'+
      sorts.map(s=>'<button class="chip'+(state.sortKey===s[0]?" on":"")+'" onclick="window.setSort(\''+s[0]+'\')">'+esc(t(s[1]))+'</button>').join("")+
+     '<button class="chip'+(state.saleFilter?" on":"")+'" onclick="window.toggleSaleFilter()" style="'+(state.saleFilter?"background:#1e3a24;color:#5fd17e;border-color:#2f6b3f":"")+'">&#9679; '+esc(t("nowFilter"))+'</button>'+
      '<select class="sel" style="margin-left:auto" onchange="window.setProcFilter(this.value)">'+
      '<option value="">'+esc(t("procAll"))+'</option>'+
      PROCESSES.map(p=>'<option value="'+p+'"'+(state.processFilter===p?" selected":"")+'>'+esc(procLabel(p,l))+'</option>').join("")+
      '</select></div></div>';
 
   /* 카드 */
-  let view=beans.filter(b=>(!state.countryFilter||b.country===state.countryFilter)&&(!state.processFilter||b.process===state.processFilter));
+  let view=beans.filter(b=>(!state.countryFilter||b.country===state.countryFilter)&&
+    (!state.processFilter||b.process===state.processFilter)&&
+    (!state.saleFilter||b.onSale!==false));
   const cmp={
     votes:(a,b)=>(b.votes||0)-(a.votes||0),
     brand:(a,b)=>a.brand.localeCompare(b.brand,"ko"),
@@ -893,27 +936,7 @@ function renderDash(){
 
   h+='<div class="beans">';
   if(!view.length)h+='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6f7276;font-size:13px">'+esc(t("noBeans"))+'</div>';
-  view.forEach(b=>{
-    const voted=state.myVotes.includes(b.id);
-    const logo=state.brandLogos[b.brand];
-    const logoHtml=logo
-      ? '<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>'
-      : '<div class="blogo ph">&#9749;</div>';
-    h+='<div class="bean">'+
-       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
-       '<div class="brandrow">'+logoHtml+
-       '<div><div class="brand">'+esc(b.brand)+'</div><div class="bname">'+esc(beanName(b,l))+'</div></div></div>'+
-       '<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div>'+
-       '<div class="origin">&#127757; '+esc(countryName(b.country,l))+'</div>'+
-       '<div class="notetags">'+
-       (b.notes||[]).map(n=>'<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>').join("")+
-       '</div>'+
-       (subnoteText(b,l)?'<div class="subnote">&#8220;'+esc(subnoteText(b,l))+'&#8221;</div>':"")+
-       '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
-       '<button class="votebtn'+(voted?" voted":"")+'" onclick="window.vote(\''+b.id+'\')">'+
-       (voted?"&#10084;":"&#9825;")+' '+(b.votes||0)+'</button></div>'+
-       '</div>';
-  });
+  view.forEach(b=>{ h+=beanCardHtml(b,l); });
   h+='</div>';
   return h;
 }
@@ -921,6 +944,32 @@ function renderDash(){
 function statCard(ico,lbl,val,sub){
   return '<div class="stat"><div class="lbl">'+ico+' '+esc(lbl)+'</div>'+
     '<div class="val">'+val+'</div>'+(sub?'<div class="sub">'+sub+'</div>':"")+'</div>';
+}
+
+/* 원두 카드 1개 HTML */
+function beanCardHtml(b,l){
+  var voted=state.myVotes.indexOf(b.id)>=0;
+  var logo=state.brandLogos[b.brand];
+  var logoHtml=logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>';
+  var onSale=b.onSale!==false; /* 미지정 원두는 판매중으로 간주 */
+  var badge=onSale?'<span class="nowbadge"><span class="nowdot"></span>'+esc(t("nowBadge"))+'</span>':"";
+  var sub=subnoteText(b,l);
+  var h='<div class="bean'+(onSale?"":" dim")+'">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+    '<div class="brandrow">'+logoHtml+
+    '<div><div class="brand">'+esc(b.brand)+'</div><div class="bname">'+esc(beanName(b,l))+'</div></div></div>'+
+    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+
+    badge+'<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div></div>'+
+    '<div class="origin">&#127757; '+esc(countryName(b.country,l))+'</div>'+
+    '<div class="notetags">'+
+    (b.notes||[]).map(function(n){return '<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>';}).join("")+
+    '</div>'+
+    (sub?'<div class="subnote">&#8220;'+esc(sub)+'&#8221;</div>':"")+
+    '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
+    '<button class="votebtn'+(voted?" voted":"")+'" onclick="window.vote(\''+b.id+'\')">'+
+    (voted?"&#10084;":"&#9825;")+' '+(b.votes||0)+'</button></div>'+
+    '</div>';
+  return h;
 }
 
 /* ===== 원두 요청 카드 (방문자용) ===== */
@@ -1057,7 +1106,7 @@ function renderAdmin(){
   h+=(typeof renderBulkEdit==="function")?safeRender(renderBulkEdit):"";
 
   /* 원두 요청 관리 */
-  h+=(typeof renderRequestAdmin==="function")?safeRender(renderRequestAdmin):
+  h+=(typeof window.renderRequestAdmin==="function")?safeRender(window.renderRequestAdmin):
      '<div class="card" style="padding:16px;margin-bottom:16px;color:#cf954f;font-size:12px">'+
      '&#9888; 원두 요청 관리 모듈을 불러오지 못했습니다. (renderRequestAdmin 미정의)</div>';
 
@@ -1102,11 +1151,14 @@ function renderAdmin(){
      esc(t("listTitle"))+' ('+state.beans.length+esc(t("unitKind"))+')</h2>';
   state.beans.forEach(b=>{
     const logo=state.brandLogos[b.brand];
+    const onSale=b.onSale!==false;
     h+='<div class="arow">'+
        (logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>')+
        '<div style="flex:1;min-width:120px"><div style="font-size:13px;font-weight:700">'+esc(b.name)+
        (b.nameEn?' <span style="color:#6f7276;font-weight:400">/ '+esc(b.nameEn)+'</span>':"")+'</div>'+
        '<div class="muted">'+esc(b.brand)+' &#183; '+esc(countryName(b.country,l))+' &#183; '+esc(procLabel(b.process,l))+'</div></div>'+
+       '<button class="saletoggle '+(onSale?"on":"off")+'" onclick="window.toggleSale(\''+b.id+'\')">'+
+       '<span class="swdot '+(onSale?"on":"")+'"></span>'+esc(onSale?t("onSale"):t("offSale"))+'</button>'+
        '<div style="display:flex;align-items:center;gap:4px">'+
        '<button class="stepbtn" onclick="window.adjust(\''+b.id+'\',-1)">&#8722;</button>'+
        '<span style="font-size:13px;font-weight:800;width:40px;text-align:center;color:#cf954f">&#9829;'+(b.votes||0)+'</span>'+
@@ -1127,6 +1179,7 @@ window.setLang=v=>{state.lang=v;localStorage.setItem("cdn-lang",v);render();};
 window.setTab=v=>{state.tab=v;render();};
 window.setSort=v=>{state.sortKey=v;render();};
 window.setProcFilter=v=>{state.processFilter=v;render();};
+window.toggleSaleFilter=()=>{state.saleFilter=!state.saleFilter;render();};
 window.pickCountry=id=>{state.countryFilter=state.countryFilter===id?"":id;render();};
 window.vote=id=>voteBean(id);
 window.tryAuth=()=>{
@@ -1150,7 +1203,7 @@ window.saveForm=()=>{
     saveBeans(state.beans.map(b=>b.id===state.editId?Object.assign({},b,rec):b));
     flash(t("msgEdited"));
   }else{
-    rec.id="b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);rec.votes=0;
+    rec.id="b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);rec.votes=0;rec.onSale=true;
     saveBeans([...state.beans,rec]);
     flash(t("msgAdded"));
   }
@@ -1184,6 +1237,9 @@ window.delBean=id=>{
 };
 window.adjust=(id,d)=>{
   saveBeans(state.beans.map(b=>b.id===id?Object.assign({},b,{votes:Math.max(0,(b.votes||0)+d)}):b));
+};
+window.toggleSale=id=>{
+  saveBeans(state.beans.map(b=>b.id===id?Object.assign({},b,{onSale:!(b.onSale!==false)}):b));
 };
 window.state_patText=v=>{state.patText=v;};
 /* ---------- 원두 요청 핸들러 ---------- */
