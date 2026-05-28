@@ -98,15 +98,15 @@
   .nowsec{background:linear-gradient(135deg,#1e3a24,#161d18);border:1px solid #2f6b3f;
     border-radius:14px;padding:16px;margin-bottom:20px;}
   .brandrow{display:flex;align-items:center;gap:8px;}
-  .blogo{width:34px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0;
+  .blogo{width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0;
     background:var(--panel2);border:1px solid var(--border);}
-  .blogo.ph{display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--metalDark);}
+  .blogo.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--metalDark);}
   /* 로고 관리 */
-  .logorow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;
+  .logorow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:9px;
     background:var(--panel2);border:1px solid var(--border);margin-bottom:8px;}
-  .logobig{width:48px;height:48px;border-radius:9px;object-fit:cover;flex-shrink:0;
+  .logobig{width:80px;height:80px;border-radius:12px;object-fit:cover;flex-shrink:0;
     background:var(--panel);border:1px solid var(--border);}
-  .logobig.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--metalDark);}
+  .logobig.ph{display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--metalDark);}
   .procpill{font-size:11px;padding:4px 8px;border-radius:6px;background:var(--panel2);
     color:var(--metal);border:1px solid var(--border);white-space:nowrap;}
   .origin{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);}
@@ -361,6 +361,12 @@ function subnoteText(b,l){
   if(b.subnotesEn&&b.subnotesEn.trim())return b.subnotesEn;
   return autoTranslateNotes(b.subnotes||"");
 }
+/* 브랜드 표시명: 한국어는 원래 이름, 그 외 언어는 brandLogos에 저장된 영어명 우선 */
+function brandName(brand,l){
+  if(l==="ko")return brand;
+  var en=state.brandNamesEn&&state.brandNamesEn[brand];
+  return (en&&en.trim())?en:brand;
+}
 /* 생산지 패턴 매핑 — 다국어 이름 + 지역/농장 키워드 */
 const COUNTRY_ALIAS = {};
 (function(){
@@ -422,6 +428,7 @@ const T={
     logoUpload:"로고 업로드",logoChange:"변경",logoRemove:"삭제",
     logoNoBrands:"먼저 원두를 등록하면 브랜드 목록이 나타납니다.",
     logoSaved:"로고가 저장되었습니다",logoRemoved:"로고가 삭제되었습니다",logoErr:"PNG 이미지 파일만 올릴 수 있습니다",
+    brandEnPlaceholder:"브랜드 영어명 (예: Momos Coffee)",brandEnSaved:"브랜드 영어명을 저장했습니다",
     fNameEn:"원두명 (영어) — 선택",fNameEnPlaceholder:"예: Yirgacheffe Kochere",
     fSubnotesEn:"세부 노트 (영어) — 선택 · 비우면 자동 변환",fSubnotesEnPlaceholder:"예: jasmine, bergamot, lemon",
     reqTitle:"카페 데니스에 원두 요청하기",
@@ -468,6 +475,7 @@ const T={
     logoUpload:"Upload Logo",logoChange:"Change",logoRemove:"Remove",
     logoNoBrands:"Register beans first and brand list will appear here.",
     logoSaved:"Logo saved",logoRemoved:"Logo removed",logoErr:"Only PNG image files are allowed",
+    brandEnPlaceholder:"Brand English name (e.g. Momos Coffee)",brandEnSaved:"Brand English name saved",
     fNameEn:"Bean Name (English) — optional",fNameEnPlaceholder:"e.g. Yirgacheffe Kochere",
     fSubnotesEn:"Detailed Notes (English) — optional · auto-converts if empty",fSubnotesEnPlaceholder:"e.g. jasmine, bergamot, lemon",
     reqTitle:"Request a Bean for Cafe Dennis",
@@ -514,6 +522,7 @@ const T={
     logoUpload:"上传 Logo",logoChange:"更换",logoRemove:"删除",
     logoNoBrands:"先登记咖啡豆后，品牌列表将显示在此。",
     logoSaved:"Logo 已保存",logoRemoved:"Logo 已删除",logoErr:"只能上传 PNG 图片文件",
+    brandEnPlaceholder:"品牌英文名（例：Momos Coffee）",brandEnSaved:"品牌英文名已保存",
     fNameEn:"咖啡豆名称（英文）— 选填",fNameEnPlaceholder:"例：Yirgacheffe Kochere",
     fSubnotesEn:"详细风味（英文）— 选填 · 留空则自动转换",fSubnotesEnPlaceholder:"例：jasmine, bergamot, lemon",
     reqTitle:"向丹尼斯咖啡馆请求咖啡豆",
@@ -560,6 +569,7 @@ const T={
     logoUpload:"อัปโหลดโลโก้",logoChange:"เปลี่ยน",logoRemove:"ลบ",
     logoNoBrands:"ลงทะเบียนเมล็ดกาแฟก่อน แล้วรายการแบรนด์จะปรากฏที่นี่",
     logoSaved:"บันทึกโลโก้แล้ว",logoRemoved:"ลบโลโก้แล้ว",logoErr:"อัปโหลดได้เฉพาะไฟล์ภาพ PNG เท่านั้น",
+    brandEnPlaceholder:"ชื่อแบรนด์ภาษาอังกฤษ (เช่น Momos Coffee)",brandEnSaved:"บันทึกชื่อแบรนด์ภาษาอังกฤษแล้ว",
     fNameEn:"ชื่อเมล็ดกาแฟ (อังกฤษ) — ไม่บังคับ",fNameEnPlaceholder:"เช่น Yirgacheffe Kochere",
     fSubnotesEn:"โน้ตโดยละเอียด (อังกฤษ) — ไม่บังคับ · เว้นว่างจะแปลอัตโนมัติ",fSubnotesEnPlaceholder:"เช่น jasmine, bergamot, lemon",
     reqTitle:"ขอเมล็ดกาแฟกับคาเฟ่เดนนิส",
@@ -593,7 +603,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 const beanName=(b,l)=>(l==="ko")?(b.name||""):((b.nameEn&&b.nameEn.trim())?b.nameEn:(b.name||""));
 
 const state={
-  beans:null, brandLogos:{}, requests:[], lang:localStorage.getItem("cdn-lang")||"ko",
+  beans:null, brandLogos:{}, brandNamesEn:{}, requests:[], lang:localStorage.getItem("cdn-lang")||"ko",
   myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
   tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"", saleFilter:false,
   authed:false, editId:null,
@@ -608,7 +618,7 @@ const fmtPrice=n=>state.lang==="ko"?(n||0).toLocaleString()+"원":"₩"+(n||0).t
 /* ---------- Firebase ----------
    DB 구조: cafeDennis/beans (배열), cafeDennis/brandLogos (브랜드명→dataURL),
             cafeDennis/requests (요청 배열) */
-let beansRef=null, logosRef=null, reqRef=null;
+let beansRef=null, logosRef=null, reqRef=null, brandEnRef=null;
 function initFirebase(){
   const cfg=FIREBASE_CONFIG;
   if(!cfg.apiKey||cfg.apiKey.indexOf("여기에")===0||!cfg.databaseURL||cfg.databaseURL.indexOf("여기에")>=0){
@@ -620,6 +630,7 @@ function initFirebase(){
     beansRef=root.child("beans");
     logosRef=root.child("brandLogos");
     reqRef=root.child("requests");
+    brandEnRef=root.child("brandNamesEn");
     state.fbReady=true;
     beansRef.on("value",snap=>{
       const v=snap.val();
@@ -632,6 +643,10 @@ function initFirebase(){
       state.brandLogos=snap.val()||{};
       render();
     },err=>{console.error("Firebase logos:",err);});
+    brandEnRef.on("value",snap=>{
+      state.brandNamesEn=snap.val()||{};
+      render();
+    },err=>{console.error("Firebase brandEn:",err);});
     reqRef.on("value",snap=>{
       const v=snap.val();
       if(v&&Array.isArray(v)){state.requests=v.filter(Boolean);}
@@ -645,6 +660,7 @@ function loadLocal(){
   const ls=localStorage.getItem("cdn-beans");
   state.beans=ls?JSON.parse(ls):SEED.slice();
   state.brandLogos=JSON.parse(localStorage.getItem("cdn-logos")||"{}");
+  state.brandNamesEn=JSON.parse(localStorage.getItem("cdn-branden")||"{}");
   state.requests=JSON.parse(localStorage.getItem("cdn-requests")||"[]");
   render();
 }
@@ -664,6 +680,11 @@ function saveLogos(next){
   state.brandLogos=next;
   if(state.fbReady&&logosRef){logosRef.set(next).catch(e=>console.error(e));}
   else{localStorage.setItem("cdn-logos",JSON.stringify(next));render();}
+}
+function saveBrandEn(next){
+  state.brandNamesEn=next;
+  if(state.fbReady&&brandEnRef){brandEnRef.set(next).catch(e=>console.error(e));}
+  else{localStorage.setItem("cdn-branden",JSON.stringify(next));render();}
 }
 function saveRequests(next){
   const clean=(next||[]).filter(Boolean).slice();
@@ -870,8 +891,9 @@ function renderDash(){
     statCard("&#129514;",t("statTopProc"),topProc?esc(procLabel(topProc[0],l)):"-",topProc?"&#9829;"+topProc[1]:"")+
     '</div>';
 
-  /* ===== 현재 판매 중인 원두 ===== */
-  const onSaleBeans=beans.filter(b=>b.onSale!==false);
+  /* ===== 현재 판매 중인 원두 (인기순 정렬) ===== */
+  const onSaleBeans=beans.filter(b=>b.onSale!==false)
+    .slice().sort((a,b)=>(b.votes||0)-(a.votes||0));
   h+='<div class="nowsec">'+
      '<h2 class="sec" style="margin-bottom:10px;color:#5fd17e">&#9749; '+esc(t("nowTitle"))+
      ' <span style="color:#3f8a52;font-weight:600">('+onSaleBeans.length+t("unitKind")+')</span></h2>';
@@ -957,7 +979,7 @@ function beanCardHtml(b,l){
   var h='<div class="bean'+(onSale?"":" dim")+'">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
     '<div class="brandrow">'+logoHtml+
-    '<div><div class="brand">'+esc(b.brand)+'</div><div class="bname">'+esc(beanName(b,l))+'</div></div></div>'+
+    '<div><div class="brand">'+esc(brandName(b.brand,l))+'</div><div class="bname">'+esc(beanName(b,l))+'</div></div></div>'+
     '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+
     badge+'<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div></div>'+
     '<div class="origin">&#127757; '+esc(countryName(b.country,l))+'</div>'+
@@ -1065,7 +1087,7 @@ function renderAdmin(){
   if(state.flash)h+='<div class="flash">'+esc(state.flash)+'</div>';
   if(!state.fbReady)h+='<div class="fbwarn">&#9888; '+esc(t("fbError"))+'</div>';
 
-  /* 백업 */
+  /* 백업 (맨 아래에 배치) */
   h+='<div class="card" style="padding:16px;margin-bottom:16px">'+
      '<h2 class="sec" style="margin-bottom:4px">'+esc(t("backupTitle"))+'</h2>'+
      '<p class="muted" style="margin-bottom:12px">'+esc(t("backupDesc"))+'</p>'+
@@ -1088,10 +1110,16 @@ function renderAdmin(){
     brands.forEach((br,i)=>{
       const logo=state.brandLogos[br];
       const idForInput="logoFile_"+i;
+      const enVal=state.brandNamesEn[br]||"";
       h+='<div class="logorow">'+
          (logo?'<img class="logobig" src="'+logo+'" alt="'+esc(br)+'"/>':'<div class="logobig ph">&#9749;</div>')+
-         '<div style="flex:1;min-width:100px"><div style="font-size:13px;font-weight:700">'+esc(br)+'</div>'+
-         '<div class="muted">'+state.beans.filter(b=>b.brand===br).length+esc(t("unitKind"))+'</div></div>'+
+         '<div style="flex:1;min-width:120px">'+
+         '<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+esc(br)+
+         ' <span class="muted">('+state.beans.filter(b=>b.brand===br).length+esc(t("unitKind"))+')</span></div>'+
+         '<input value="'+esc(enVal)+'" placeholder="'+esc(t("brandEnPlaceholder"))+'" '+
+         'style="width:100%;padding:5px 8px;border-radius:6px;font-size:11px;background:var(--panel);color:var(--ink);border:1px solid var(--border);outline:none" '+
+         'onchange="window.saveBrandEnName(\''+esc(br).replace(/'/g,"\\'")+'\',this.value)"/>'+
+         '</div>'+
          '<input type="file" id="'+idForInput+'" accept="image/png" class="hidden" '+
          'onchange="window.uploadLogo(\''+esc(br).replace(/'/g,"\\'")+'\',event)"/>'+
          '<button class="btn ghost" onclick="document.getElementById(\''+idForInput+'\').click()">&#11014; '+
@@ -1205,12 +1233,15 @@ function renderAdmin(){
      '</div></div>';
 
   /* 목록 */
-  h+='<div class="card" style="padding:16px"><h2 class="sec" style="margin-bottom:12px">'+
+  /* 원두 목록 (secList에 담아 맨 위에 배치) */
+  var secList='<div class="card" style="padding:16px;margin-bottom:16px"><h2 class="sec" style="margin-bottom:12px">'+
      esc(t("listTitle"))+' ('+state.beans.length+esc(t("unitKind"))+')</h2>';
-  state.beans.forEach(b=>{
+  /* 최신 추가 순 (배열 뒤쪽이 최신) */
+  var listBeans=state.beans.slice().reverse();
+  listBeans.forEach(b=>{
     const logo=state.brandLogos[b.brand];
     const onSale=b.onSale!==false;
-    h+='<div class="arow">'+
+    secList+='<div class="arow">'+
        (logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>')+
        '<div style="flex:1;min-width:120px"><div style="font-size:13px;font-weight:700">'+esc(b.name)+
        (b.nameEn?' <span style="color:#6f7276;font-weight:400">/ '+esc(b.nameEn)+'</span>':"")+'</div>'+
@@ -1225,7 +1256,9 @@ function renderAdmin(){
        '<button class="icobtn" style="color:#c0524e" onclick="window.delBean(\''+b.id+'\')">&#128465;</button>'+
        '</div>';
   });
-  h+='</div>';
+  secList+='</div>';
+  /* 맨 위에 원두 목록 배치 (백업은 이미 h 안에 마지막으로 추가됨) */
+  h=secList+h;
   return h;
 }
 function fld(label,inner){return '<div><label class="fl">'+esc(label)+'</label>'+inner+'</div>';}
@@ -1385,6 +1418,13 @@ window.removeLogo=brand=>{
   delete next[brand];
   saveLogos(next);
   flash(t("logoRemoved"));
+};
+window.saveBrandEnName=(brand,val)=>{
+  const next=Object.assign({},state.brandNamesEn);
+  const v=(val||"").trim();
+  if(v){next[brand]=v;}else{delete next[brand];}
+  saveBrandEn(next);
+  flash(t("brandEnSaved"));
 };
 window.runPattern=()=>{
   const parsed=parsePattern(state.patText||"");
