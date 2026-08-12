@@ -1,6 +1,6 @@
 <!--
   ============================================================
-  카페 데니스의 원두 노트 로그 — 외부 배포용 index.html (v3 개선판)
+  카페 데니스 원두 노트 리스트 — 외부 배포용 index.html (v4 개선판)
   GitHub Pages + Firebase Realtime Database
 
   ▣ 관리자 비밀번호: 아래 ADMIN_PW (기본 "dennis")
@@ -9,7 +9,14 @@
 -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>카페 데니스의 원두 노트 로그</title>
+<title>카페 데니스 원두 노트 리스트</title>
+<meta name="description" content="카페 데니스에서 지금 내리는 필터 커피 원두를 확인하고, 마음에 드는 원두에 투표해 보세요." />
+<meta name="theme-color" content="#121113" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="카페 데니스 원두 노트 리스트" />
+<meta property="og:description" content="지금 판매 중인 원두 확인 · 마음에 드는 원두에 ♡ 투표 · 원두 요청까지" />
+<meta property="og:url" content="https://dennisoh0714.github.io/beans-log/" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -24,11 +31,12 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
   body{background:var(--black);color:var(--ink);
-    font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    font-family:"Pretendard Variable",Pretendard,ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     -webkit-text-size-adjust:100%;}
   .wrap{max-width:980px;margin:0 auto;padding:16px;}
   @media(min-width:640px){.wrap{padding:24px;}}
-  button{font-family:inherit;cursor:pointer;border:none;}
+  button{font-family:inherit;cursor:pointer;border:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
   input,select,textarea{font-family:inherit;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;}
   [id^="sec-"]{scroll-margin-top:78px;}
@@ -49,11 +57,48 @@
     display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
   h1{font-size:21px;font-weight:800;letter-spacing:-.4px;}
   @media(min-width:640px){h1{font-size:24px;}}
+  .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.22em;color:var(--amber);margin-bottom:4px;}
+  .tagline{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.5;word-break:keep-all;}
   .langbtn{font-size:13px;font-weight:700;padding:8px 12px;border-radius:9px;
     background:var(--panel2);color:var(--sub);border:1px solid var(--border);
     display:flex;align-items:center;gap:5px;transition:background .12s,color .12s;}
   .langbtn.on{background:var(--walnut);color:var(--ink);border-color:var(--walnutLt);}
   .langflag{font-size:18px;line-height:1;}
+  .lsglobe{font-size:16px;line-height:1;margin-right:2px;opacity:.85;}
+  .langwrap{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;}
+  /* 모바일: 언어 버튼 4개를 한 줄에 균등 배치 */
+  @media(max-width:560px){
+    header{padding:16px;}
+    .langwrap{width:100%;flex-wrap:nowrap;gap:5px;margin-top:2px;}
+    .lsglobe{display:none;}
+    .langbtn{flex:1;min-width:0;justify-content:center;padding:8px 2px;
+      font-size:12px;letter-spacing:-.3px;gap:3px;}
+    .langbtn span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .langflag{font-size:14px;}
+    .votehint{padding:12px 13px;gap:11px;}
+    .votehint .vhicon{font-size:20px;}
+    .votehint b{font-size:13.5px;}
+    .votehint span{font-size:12px;}
+  }
+  /* 투표 방법 안내 배너 */
+  .votehint{display:flex;align-items:center;gap:14px;
+    background:linear-gradient(135deg,#2a2118,#1c1712);
+    border:1px solid rgba(207,149,79,.35);border-radius:14px;
+    padding:14px 16px;margin-bottom:16px;}
+  .votehint .vhicon{font-size:26px;line-height:1;color:#ff8e8e;flex-shrink:0;
+    animation:vhbeat 1.6s ease-in-out infinite;}
+  .votehint b{display:block;font-size:14.5px;color:var(--amber);margin-bottom:3px;word-break:keep-all;}
+  .votehint span{font-size:12.5px;color:var(--sub);line-height:1.55;word-break:keep-all;}
+  @keyframes vhbeat{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+  @media(prefers-reduced-motion:reduce){.votehint .vhicon{animation:none;}}
+  .votehint.slim{padding:9px 14px;gap:10px;}
+  .votehint.slim .vhicon{font-size:16px;animation:none;}
+  /* 원두 요청 유도 */
+  .reqnudge{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    margin:4px 0 8px;font-size:13px;color:var(--metalDark);word-break:keep-all;}
+  .reqnudgebtn{font-size:13px;font-weight:700;color:var(--amber);padding:8px 14px;border-radius:10px;
+    background:rgba(207,149,79,.10);border:1px solid rgba(207,149,79,.35);}
+  .reqnudgebtn:hover{background:rgba(207,149,79,.18);}
   /* 탭 */
   .tabbar{position:sticky;top:0;z-index:50;background:var(--black);
     padding:8px 0 12px;display:flex;gap:8px;}
@@ -61,6 +106,11 @@
     background:var(--panel);color:var(--sub);border:1px solid var(--border);
     display:flex;align-items:center;gap:6px;}
   .tab.on{background:var(--walnut);color:var(--ink);border-color:var(--walnutLt);}
+  .admgear{margin-left:auto;width:38px;height:38px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+    background:transparent;color:var(--metalDark);border:1px solid transparent;}
+  .admgear:hover{color:var(--metal);background:var(--panel);border-color:var(--border);}
+  .admgear.on{background:var(--walnut);color:var(--ink);border-color:var(--walnutLt);}
   /* 통계 */
   .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
   @media(min-width:880px){.stats{grid-template-columns:repeat(4,1fr);}}
@@ -96,16 +146,20 @@
     background:var(--panel2);color:var(--sub);border:1px dashed var(--border);margin-top:6px;}
   .morebtn.green{background:rgba(30,58,36,.4);color:var(--green);border-color:var(--greenBd);}
   /* 원두 카드 */
-  .beans{display:grid;grid-template-columns:1fr;gap:12px;}
-  @media(min-width:640px){.beans{grid-template-columns:repeat(2,1fr);}}
-  .bean{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
-    display:flex;flex-direction:column;gap:10px;}
+  .beans{display:grid;grid-template-columns:1fr;gap:14px;}
+  .resultbar{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin:2px 2px 10px;font-size:12.5px;color:var(--metalDark);font-weight:600;}
+  @media(min-width:640px){.beans{grid-template-columns:repeat(2,1fr);gap:16px;}}
+  .bean{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;
+    display:flex;flex-direction:column;gap:11px;box-shadow:0 3px 12px rgba(0,0,0,.28);
+    transition:transform .15s,box-shadow .15s;}
+  .bean:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.4);}
   .bean.dim{opacity:.55;}
   .brandrow{display:flex;align-items:center;gap:12px;}
   .blogo{width:80px;height:80px;border-radius:14px;object-fit:cover;flex-shrink:0;
     background:var(--panel2);border:1px solid var(--border);}
   .blogo.ph{display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--metalDark);}
-  .bean .brand{font-size:13px;font-weight:700;color:var(--metalDark);letter-spacing:.3px;}
+  .bean .brand{font-size:13px;font-weight:700;color:var(--metal);letter-spacing:.3px;}
   .bean .bname{font-size:18px;font-weight:800;line-height:1.25;word-break:keep-all;}
   .procpill{font-size:11px;padding:4px 9px;border-radius:6px;background:var(--panel2);
     color:var(--metal);border:1px solid var(--border);white-space:nowrap;}
@@ -115,8 +169,8 @@
   .nowdot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;}
   .origin{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);}
   .notetags{display:flex;flex-wrap:wrap;gap:6px;}
-  .ntag{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;}
-  .subnote{font-size:12px;color:var(--metalDark);line-height:1.5;}
+  .ntag{font-size:11.5px;padding:4px 10px;border-radius:999px;font-weight:600;}
+  .subnote{font-size:12.5px;color:var(--sub);line-height:1.55;}
   .beanfoot{display:flex;justify-content:space-between;align-items:center;
     border-top:1px solid var(--border);padding-top:10px;margin-top:2px;}
   .price{font-size:16px;font-weight:800;color:var(--amber);}
@@ -427,7 +481,14 @@ var LANGS=[
   {id:"th",label:"ไทย",flag:"&#127481;&#127469;",short:"THA"}
 ];
 var T={
-ko:{appTitle:"카페 데니스의 원두 노트 로그",appSubtitle:"필터로 사용한 원두 데이터 · 방문자 인기투표 대시보드",
+ko:{appTitle:"카페 데니스 원두 노트 리스트",
+ voteHintTitle:"마음에 드는 원두에 투표해 보세요!",
+ voteHintDesc:"원두 카드의 ♡ 버튼을 탭하면 바로 인기투표에 반영됩니다. 한 번 더 탭하면 취소돼요.",
+ voteBtn:"투표",voteThanks:"투표 완료! 소중한 한 표 감사합니다 ♥",voteUndo:"투표를 취소했습니다",
+ voteHintDone:"투표 참여 완료! 다른 원두도 ♡ 탭으로 언제든 응원할 수 있어요.",
+ reqNudgeQ:"찾는 원두가 없나요?",reqNudgeBtn:"원두 요청하기",
+ appTagline:"오늘 판매 중인 원두를 살펴보고, 좋아하는 원두에 한 표를 남겨보세요.",
+ clearFilters:"검색·필터 지우기",resultCount:"{n}종 표시 중",
  tabDash:"대시보드",tabReq:"요청하기",tabAdmin:"관리자",
  statBeans:"등록 원두",statOnSale:"판매중",statVotes:"총 투표",statTop:"인기 1위",unitKind:"종",
  nowTitle:"현재 판매 중인 원두",nowBadge:"판매중",nowEmpty:"현재 판매 중인 원두가 없습니다.",nowFilter:"판매중만",
@@ -476,7 +537,14 @@ ko:{appTitle:"카페 데니스의 원두 노트 로그",appSubtitle:"필터로 �
  bulkTableHint:"칸을 수정한 뒤 '전체 저장'을 누르세요. 영어 노트를 비우면 화면에서 자동 변환됩니다.",
  bulkColName:"원두명 (한국어)",bulkColNameEn:"원두명 (영어)",bulkColSubEn:"세부 노트 (영어)",
  bulkSaveAll:"전체 저장",bulkSaved:"영어 정보를 일괄 저장했습니다"},
-en:{appTitle:"Cafe Dennis's Bean Note Log",appSubtitle:"Filter coffee bean data · Visitor popularity vote dashboard",
+en:{appTitle:"Cafe Dennis Bean Note List",
+ voteHintTitle:"Vote for your favorite bean!",
+ voteHintDesc:"Tap the ♡ button on any bean card to cast your vote. Tap again to undo.",
+ voteBtn:"Vote",voteThanks:"Thanks for voting! ♥",voteUndo:"Vote removed",
+ voteHintDone:"You've voted! You can still tap ♡ on other beans anytime.",
+ reqNudgeQ:"Can't find the bean you're looking for?",reqNudgeBtn:"Request a Bean",
+ appTagline:"Browse today's beans and cast a vote for your favorite.",
+ clearFilters:"Clear search & filters",resultCount:"Showing {n} beans",
  tabDash:"Dashboard",tabReq:"Request",tabAdmin:"Admin",
  statBeans:"Beans",statOnSale:"On Sale",statVotes:"Total Votes",statTop:"Top Pick",unitKind:"",
  nowTitle:"Now Serving",nowBadge:"On Sale",nowEmpty:"No beans currently on sale.",nowFilter:"On sale only",
@@ -525,7 +593,14 @@ en:{appTitle:"Cafe Dennis's Bean Note Log",appSubtitle:"Filter coffee bean data 
  bulkTableHint:"Edit fields then press 'Save All'. Empty English notes auto-convert on display.",
  bulkColName:"Name (Korean)",bulkColNameEn:"Name (English)",bulkColSubEn:"Notes (English)",
  bulkSaveAll:"Save All",bulkSaved:"English info saved"},
-zh:{appTitle:"丹尼斯咖啡馆 咖啡豆笔记日志",appSubtitle:"滤泡咖啡豆数据 · 访客人气投票仪表板",
+zh:{appTitle:"丹尼斯咖啡馆 咖啡豆笔记清单",
+ voteHintTitle:"为您喜欢的咖啡豆投票吧！",
+ voteHintDesc:"点击咖啡豆卡片上的 ♡ 按钮即可投票，再点一次可取消。",
+ voteBtn:"投票",voteThanks:"感谢您的投票！♥",voteUndo:"已取消投票",
+ voteHintDone:"已投票！随时可点 ♡ 为其他咖啡豆加油。",
+ reqNudgeQ:"没有找到想要的咖啡豆？",reqNudgeBtn:"请求咖啡豆",
+ appTagline:"看看今天在售的咖啡豆，为喜欢的那一款投上一票吧。",
+ clearFilters:"清除搜索与筛选",resultCount:"显示 {n} 款",
  tabDash:"仪表板",tabReq:"请求",tabAdmin:"管理员",
  statBeans:"登记咖啡豆",statOnSale:"在售",statVotes:"总投票数",statTop:"人气第一",unitKind:"种",
  nowTitle:"当前供应咖啡豆",nowBadge:"在售",nowEmpty:"当前没有在售的咖啡豆。",nowFilter:"仅看在售",
@@ -574,7 +649,14 @@ zh:{appTitle:"丹尼斯咖啡馆 咖啡豆笔记日志",appSubtitle:"滤泡咖�
  bulkTableHint:"修改后点击'全部保存'。英文风味留空时显示自动转换结果。",
  bulkColName:"名称（韩文）",bulkColNameEn:"名称（英文）",bulkColSubEn:"风味（英文）",
  bulkSaveAll:"全部保存",bulkSaved:"已批量保存"},
-th:{appTitle:"บันทึกโน้ตเมล็ดกาแฟ คาเฟ่เดนนิส",appSubtitle:"ข้อมูลเมล็ดกาแฟดริป · แดชบอร์ดโหวตความนิยม",
+th:{appTitle:"รายการโน้ตเมล็ดกาแฟ คาเฟ่เดนนิส",
+ voteHintTitle:"โหวตให้เมล็ดกาแฟที่คุณชอบ!",
+ voteHintDesc:"แตะปุ่ม ♡ บนการ์ดเมล็ดกาแฟเพื่อโหวตได้ทันที แตะอีกครั้งเพื่อยกเลิก",
+ voteBtn:"โหวต",voteThanks:"ขอบคุณสำหรับโหวตของคุณ! ♥",voteUndo:"ยกเลิกโหวตแล้ว",
+ voteHintDone:"โหวตแล้ว! แตะ ♡ ให้เมล็ดอื่นได้ทุกเมื่อ",
+ reqNudgeQ:"ไม่พบเมล็ดกาแฟที่ต้องการ?",reqNudgeBtn:"ขอเมล็ดกาแฟ",
+ appTagline:"ดูเมล็ดกาแฟที่ขายวันนี้ แล้วโหวตให้เมล็ดที่คุณชอบ",
+ clearFilters:"ล้างการค้นหา/ตัวกรอง",resultCount:"แสดง {n} รายการ",
  tabDash:"แดชบอร์ด",tabReq:"คำขอ",tabAdmin:"ผู้ดูแล",
  statBeans:"เมล็ดทั้งหมด",statOnSale:"มีจำหน่าย",statVotes:"โหวตทั้งหมด",statTop:"อันดับ 1",unitKind:" ชนิด",
  nowTitle:"กำลังจำหน่าย",nowBadge:"มีจำหน่าย",nowEmpty:"ขณะนี้ไม่มีเมล็ดที่จำหน่าย",nowFilter:"เฉพาะที่จำหน่าย",
@@ -628,9 +710,19 @@ th:{appTitle:"บันทึกโน้ตเมล็ดกาแฟ คา�
 /* ============================================================
    상태 & 유틸
    ============================================================ */
+/* 첫 방문 시 브라우저 언어 자동 감지 (저장된 선택이 있으면 그것을 우선) */
+function detectLang(){
+  var saved=localStorage.getItem("cdn-lang");
+  if(saved&&T[saved])return saved;
+  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||"ko").toLowerCase();
+  if(nav.indexOf("ko")===0)return "ko";
+  if(nav.indexOf("zh")===0)return "zh";
+  if(nav.indexOf("th")===0)return "th";
+  return "en";
+}
 var state={
   beans:null, brandLogos:{}, brandNamesEn:{}, requests:[],
-  lang:localStorage.getItem("cdn-lang")||"ko",
+  lang:detectLang(),
   myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
   tab:"dash", sortKey:"votes", countryFilter:"", processFilter:"", saleFilter:false, searchQ:"",
   nowExpand:false, listLimit:LIST_STEP, adminQ:"",
@@ -673,6 +765,11 @@ function flash(msg){
 var beansRef=null, logosRef=null, reqRef=null, brandEnRef=null;
 function initFirebase(){
   var cfg=FIREBASE_CONFIG;
+  if(typeof firebase==="undefined"){
+    /* 미리보기 등 외부 스크립트가 차단된 환경 — 로컬 데이터로 동작 */
+    console.warn("Firebase SDK 미로드: 로컬 데이터 모드로 실행합니다.");
+    state.fbReady=false; loadLocal(); return;
+  }
   if(!cfg.apiKey||cfg.apiKey.indexOf("여기에")===0||!cfg.databaseURL){
     state.fbReady=false; loadLocal(); return;
   }
@@ -927,8 +1024,10 @@ function beanCardHtml(b,l,medal){
     '<div class="notetags">'+notesHtml+'</div>'+
     (sub?'<div class="subnote">&#8220;'+esc(sub)+'&#8221;</div>':"")+
     '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
-    '<button class="votebtn'+(voted?" voted":"")+'" onclick="window.vote(\''+b.id+'\')">'+
-    '<span class="vheart">'+(voted?"&#10084;":"&#9825;")+'</span> '+(b.votes||0)+'</button></div>'+
+    '<button class="votebtn'+(voted?" voted":"")+'" aria-pressed="'+(voted?"true":"false")+'"'+
+    ' aria-label="'+esc(t("voteBtn"))+': '+esc(beanName(b,l))+'" onclick="window.vote(\''+b.id+'\')">'+
+    '<span class="vheart" aria-hidden="true">'+(voted?"&#10084;":"&#9825;")+'</span> '+
+    (voted?"":esc(t("voteBtn"))+' &#183; ')+(b.votes||0)+'</button></div>'+
     '</div>';
   return h;
 }
@@ -946,7 +1045,19 @@ function renderDash(){
   for(i=0;i<beans.length;i++){if(isOnSale(beans[i]))onSaleCnt++;}
 
   var topVal=top?'<span style="font-size:15px">'+esc(beanName(top,l))+'</span>':"-";
-  var h='<div class="stats">'+
+
+  /* 투표 방법 안내 배너 — 첫 투표 전에는 크게, 투표 후에는 슬림하게 */
+  var h;
+  if(state.myVotes.length){
+    h='<div class="votehint slim"><span class="vhicon">&#10084;</span>'+
+      '<span>'+esc(t("voteHintDone"))+'</span></div>';
+  }else{
+    h='<div class="votehint"><span class="vhicon">&#10084;</span>'+
+      '<div><b>'+esc(t("voteHintTitle"))+'</b>'+
+      '<span>'+esc(t("voteHintDesc"))+'</span></div></div>';
+  }
+
+  h+='<div class="stats">'+
     statCard("&#9749;",t("statBeans"),beans.length+t("unitKind"),"")+
     statCard("&#9679;",t("statOnSale"),onSaleCnt+t("unitKind"),"")+
     statCard("&#9829;",t("statVotes"),totalVotes,"")+
@@ -1012,7 +1123,7 @@ function renderDash(){
   /* 검색 + 정렬 */
   var sorts=[["votes","sVotes"],["brand","sBrand"],["country","sCountry"],["process","sProcess"],["price","sPrice"]];
   h+='<div class="card" style="padding:14px;margin-bottom:14px"><div class="sortbar">'+
-     '<div class="searchbox">&#128269;<input class="dashsearch" value="'+esc(state.searchQ)+'" placeholder="'+esc(t("searchPh"))+'" oninput="window.setSearch(this.value)"/></div>'+
+     '<div class="searchbox">&#128269;<input class="dashsearch" value="'+esc(state.searchQ)+'" placeholder="'+esc(t("searchPh"))+'" aria-label="'+esc(t("searchPh"))+'" oninput="window.setSearch(this.value)"/></div>'+
      '</div><div class="sortbar" style="margin-top:8px">'+
      '<span style="font-size:12px;font-weight:700;color:#6f7276;margin-right:2px">'+esc(t("filterLabel"))+'</span>';
   for(i=0;i<sorts.length;i++){
@@ -1035,8 +1146,14 @@ function renderDash(){
     if(state.processFilter&&bb.process!==state.processFilter)continue;
     if(state.saleFilter&&!isOnSale(bb))continue;
     if(q){
-      var hay=(bb.name+" "+(bb.nameEn||"")+" "+bb.brand+" "+(state.brandNamesEn[bb.brand]||"")).toLowerCase();
-      if(hay.indexOf(q)<0)continue;
+      /* 이름·브랜드 + 생산지·가공법·향미·세부 노트까지 검색 (표시 언어 + 한/영) */
+      var hp=[bb.name,bb.nameEn||"",bb.brand,state.brandNamesEn[bb.brand]||"",
+        countryName(bb.country,l),countryName(bb.country,"ko"),countryName(bb.country,"en"),
+        procLabel(bb.process,l),procLabel(bb.process,"ko"),procLabel(bb.process,"en"),
+        subnoteText(bb,l)||"",bb.subnotes||"",bb.subnotesEn||""];
+      var ni,nn=bb.notes||[];
+      for(ni=0;ni<nn.length;ni++){hp.push(noteLabel(nn[ni],l),noteLabel(nn[ni],"ko"),noteLabel(nn[ni],"en"));}
+      if(hp.join(" ").toLowerCase().indexOf(q)<0)continue;
     }
     view.push(bb);
   }
@@ -1049,6 +1166,12 @@ function renderDash(){
   };
   view.sort(cmps[state.sortKey]||cmps.votes);
 
+  /* 결과 개수 + 검색·필터 지우기 */
+  var hasFilter=!!(q||state.countryFilter||state.processFilter||state.saleFilter);
+  h+='<div class="resultbar"><span>'+esc(t("resultCount").replace("{n}",view.length))+'</span>'+
+     (hasFilter?'<button class="chip" onclick="window.clearFilters()">&#10005; '+esc(t("clearFilters"))+'</button>':"")+
+     '</div>';
+
   var shown=view.slice(0,state.listLimit);
   h+='<div class="beans" style="padding-bottom:8px">';
   if(!view.length)h+='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6f7276;font-size:13px">'+esc(t("noBeans"))+'</div>';
@@ -1057,6 +1180,10 @@ function renderDash(){
   if(view.length>state.listLimit){
     h+='<button class="morebtn" onclick="window.moreList()">&#9660; '+esc(t("btnMore"))+' (+'+(view.length-state.listLimit)+')</button>';
   }
+  /* 원두 요청 유도 */
+  h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+
+     '<button class="reqnudgebtn" onclick="window.setTab(\'req\')">&#9749; '+esc(t("reqNudgeBtn"))+'</button></div>';
+
   h+='<div style="height:32px"></div>';
   return h;
 }
@@ -1364,6 +1491,8 @@ function safeRender(fn){
 function render(){
   var app=document.getElementById("app");
   var l=state.lang;
+  document.documentElement.lang=l;
+  document.title=t("appTitle");
   if(!state.beans){
     app.innerHTML='<div style="text-align:center;padding:80px;color:#a8a29a">'+esc(t("loading"))+'</div>';
     return;
@@ -1372,21 +1501,23 @@ function render(){
   h+='<header><div class="hdrow">'+
      '<div style="display:flex;align-items:center;gap:12px">'+
      '<div class="logo">&#9749;</div>'+
-     '<div><h1>'+esc(t("appTitle"))+'</h1>'+
-     '<p style="font-size:13px;color:#6f7276;margin-top:2px">'+esc(t("appSubtitle"))+'</p></div></div>'+
-     '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+     '<div><div class="eyebrow">CAFE DENNIS &#183; BEAN CURATION</div>'+
+     '<h1>'+esc(t("appTitle"))+'</h1>'+
+     '<p class="tagline">'+esc(t("appTagline"))+'</p></div></div>'+
+     '<div class="langwrap">'+
+     '<span class="lsglobe" aria-hidden="true">&#127760;</span>';
   var i;
   for(i=0;i<LANGS.length;i++){
     var lg=LANGS[i];
-    h+='<button class="langbtn'+(lg.id===l?" on":"")+'" onclick="window.setLang(\''+lg.id+'\')" title="'+lg.label+'">'+
-       '<span class="langflag">'+lg.flag+'</span><span>'+lg.short+'</span></button>';
+    h+='<button class="langbtn'+(lg.id===l?" on":"")+'" aria-pressed="'+(lg.id===l?"true":"false")+'" onclick="window.setLang(\''+lg.id+'\')" title="'+lg.label+'">'+
+       '<span class="langflag" aria-hidden="true">'+lg.flag+'</span><span>'+lg.label+'</span></button>';
   }
   h+='</div></div></header>';
 
   h+='<div class="tabbar">'+
-     '<button class="tab'+(state.tab==="dash"?" on":"")+'" onclick="window.setTab(\'dash\')">&#128200; '+esc(t("tabDash"))+'</button>'+
-     '<button class="tab'+(state.tab==="req"?" on":"")+'" onclick="window.setTab(\'req\')">&#9749; '+esc(t("tabReq"))+'</button>'+
-     '<button class="tab'+(state.tab==="admin"?" on":"")+'" onclick="window.setTab(\'admin\')">&#9881; '+esc(t("tabAdmin"))+'</button>'+
+     '<button class="tab'+(state.tab==="dash"?" on":"")+'"'+(state.tab==="dash"?' aria-current="true"':'')+' onclick="window.setTab(\'dash\')">&#128200; '+esc(t("tabDash"))+'</button>'+
+     '<button class="tab'+(state.tab==="req"?" on":"")+'"'+(state.tab==="req"?' aria-current="true"':'')+' onclick="window.setTab(\'req\')">&#9749; '+esc(t("tabReq"))+'</button>'+
+     '<button class="admgear'+(state.tab==="admin"?" on":"")+'"'+(state.tab==="admin"?' aria-current="true"':'')+' onclick="window.setTab(\'admin\')" title="'+esc(t("tabAdmin"))+'" aria-label="'+esc(t("tabAdmin"))+'">&#9881;</button>'+
      '</div>';
 
   if(state.tab==="dash")h+=safeRender(renderDash);
@@ -1410,6 +1541,10 @@ window.moreList=function(){state.listLimit+=LIST_STEP;render();};
 window.jumpTo=function(id){
   var el=document.getElementById(id);
   if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+};
+window.clearFilters=function(){
+  state.searchQ="";state.countryFilter="";state.processFilter="";state.saleFilter=false;
+  state.listLimit=LIST_STEP;render();
 };
 window.setSearch=function(v){
   state.searchQ=v;
@@ -1448,6 +1583,7 @@ window.vote=function(id){
   if(voted){state.myVotes.splice(state.myVotes.indexOf(id),1);}
   else{state.myVotes.push(id);}
   localStorage.setItem("cdn-myvotes",JSON.stringify(state.myVotes));
+  flash(t(voted?"voteUndo":"voteThanks"));
   render();
 };
 window.tryAuth=function(){
