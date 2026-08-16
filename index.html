@@ -145,7 +145,7 @@
   }
   @media(prefers-reduced-motion:reduce){.votehint .vhicon{animation:none;}}
   /* ===== 모션 시스템: 레터프레스처럼 '꾹' 눌리고 정착하는 느낌 ===== */
-  @keyframes fadeUp{from{opacity:0;transform:translateY(30px) scale(.96);}55%{opacity:1;}to{opacity:1;transform:none;}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(46px) scale(.93);filter:blur(4px);}55%{opacity:1;filter:blur(0);}to{opacity:1;transform:none;filter:blur(0);}}
   @keyframes cardIn{0%{opacity:0;transform:translateY(38px) scale(.88) rotate(-1.5deg);}65%{opacity:1;transform:translateY(-6px) scale(1.03) rotate(.4deg);}100%{opacity:1;transform:none;}}
   @keyframes heartPop{0%{transform:scale(1);}30%{transform:scale(2.4) rotate(-18deg);}55%{transform:scale(.75) rotate(8deg);}78%{transform:scale(1.35) rotate(-4deg);}100%{transform:scale(1);}}
   @keyframes plusFloat{0%{opacity:0;transform:translateY(6px) scale(.5);}20%{opacity:1;transform:translateY(-6px) scale(1.5);}45%{transform:translateY(-22px) scale(1.15);}100%{opacity:0;transform:translateY(-56px) scale(.85);}}
@@ -205,10 +205,10 @@
   .heartfly{position:absolute;left:50%;top:50%;pointer-events:none;color:#ff8e8e;
     text-shadow:0 0 8px rgba(255,142,142,.5);
     animation:heartFly 1s cubic-bezier(.15,.8,.3,1) both;}
-  @keyframes vringPop{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2);}
-    100%{opacity:0;transform:translate(-50%,-50%) scale(3.2);}}
-  .vring{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;
-    border:2.5px solid #ff8e8e;pointer-events:none;animation:vringPop .7s cubic-bezier(.1,.7,.3,1) both;}
+  @keyframes vringPop{0%{opacity:1;transform:translate(-50%,-50%) scale(.15);}
+    100%{opacity:0;transform:translate(-50%,-50%) scale(4.6);}}
+  .vring{position:absolute;left:50%;top:50%;width:56px;height:56px;border-radius:50%;
+    border:3px solid #ff8e8e;pointer-events:none;animation:vringPop .95s cubic-bezier(.1,.7,.3,1) both;}
   .loaddots{display:inline-flex;gap:6px;margin-bottom:12px;}
   .loaddots span{width:12px;height:12px;border-radius:50%;background:var(--amber);
     animation:loadDot 1s cubic-bezier(.3,1.2,.4,1) infinite;}
@@ -287,22 +287,38 @@
     display:flex;align-items:center;justify-content:center;gap:8px;}
   .sharebtn.prime{background:var(--walnut);border-color:var(--walnutLt);}
   .sharebtn:active{transform:scale(.96);}
+  /* 스크롤에 따라 헤더가 천천히 밀려 올라가며 흐려진다 */
+  .brandlock{transform:translateY(calc(var(--sy,0) * 0.16px));
+    opacity:calc(1 - var(--sy,0) * 0.0016);will-change:transform;}
+  .langwrap{transform:translateY(calc(var(--sy,0) * 0.09px));}
+  header{transition:border-color .3s;}
+  body.scrolled header{border-color:rgba(53,48,45,.55);}
+  /* 스크롤이 시작되면 탭바가 떠오른다 */
+  .tabbar{transition:box-shadow .35s,padding .3s;}
+  body.scrolled .tabbar{box-shadow:0 14px 30px -12px rgba(0,0,0,.85);}
+  @media(prefers-reduced-motion:reduce){
+    .brandlock,.langwrap{transform:none!important;opacity:1!important;}
+  }
   /* ===== 스크롤 진입 연출 (양방향) ===== */
-  .rv{opacity:0;transform:translateY(52px) scale(.93) rotate(.5deg);
-    filter:blur(3px);animation:none!important;will-change:transform,opacity;
-    transition:opacity .6s cubic-bezier(.2,1.05,.3,1),
-               transform .78s cubic-bezier(.2,1.12,.28,1),
-               filter .5s ease;}
-  /* 위쪽으로 벗어난 요소는 위에서 다시 내려온다 */
-  .rv.fromtop{transform:translateY(-52px) scale(.93) rotate(-.5deg);}
+  .rv{opacity:0;animation:none!important;will-change:transform,opacity;
+    transform:perspective(1100px) translateY(96px) translateZ(-90px) rotateX(15deg) scale(.86);
+    filter:blur(5px);
+    transition:opacity .5s ease,
+               transform 1.02s cubic-bezier(.16,1.06,.24,1),
+               filter .55s ease;}
+  /* 위쪽으로 벗어난 요소는 위에서 젖혀지며 내려온다 */
+  .rv.fromtop{transform:perspective(1100px) translateY(-96px) translateZ(-90px) rotateX(-15deg) scale(.86);}
   .rv.in{opacity:1;transform:none;filter:blur(0);}
-  /* 통계 카드는 가로로도 살짝 어긋나며 들어옴 */
-  .rv.stat{transform:translateY(46px) scale(.9);}
-  .rv.stat.fromtop{transform:translateY(-46px) scale(.9);}
+  /* 통계 카드는 더 깊은 곳에서 튀어나옴 */
+  .rv.stat{transform:perspective(900px) translateY(70px) translateZ(-140px) rotateX(20deg) scale(.72);}
+  .rv.stat.fromtop{transform:perspective(900px) translateY(-70px) translateZ(-140px) rotateX(-20deg) scale(.72);}
   .rv.stat.in{transform:none;}
+  .stats .stat.rv:nth-child(2){transition-delay:.09s;}
+  .stats .stat.rv:nth-child(3){transition-delay:.18s;}
+  .stats .stat.rv:nth-child(4){transition-delay:.27s;}
   /* 그리드 카드는 열 순서대로 시차를 두고 반응 */
-  .beans .bean.rv:nth-child(2n){transition-delay:.07s;}
-  .beans .bean.rv:nth-child(3n){transition-delay:.12s;}
+  .beans .bean.rv:nth-child(2n){transition-delay:.1s;}
+  .beans .bean.rv:nth-child(3n){transition-delay:.19s;}
   /* 랭킹 막대: 화면에 들어올 때 0에서 자라남 */
   .barfill{width:var(--w,0);transition:width .95s cubic-bezier(.2,.9,.25,1);}
   .rv:not(.in) .barfill{width:0;transition:none;}
@@ -323,7 +339,8 @@
     55%{transform:translateY(-14%) scale(1.22);opacity:1;}
     100%{transform:none;}}
   /* 순위 이동(FLIP) 중에는 그림자를 살짝 키워 떠 있는 느낌 */
-  .bean.flip{z-index:2;box-shadow:0 18px 40px rgba(0,0,0,.55);}
+  .bean.flip{z-index:2;box-shadow:0 26px 56px rgba(0,0,0,.68);}
+  .bean.flip .bname{color:var(--amber);transition:color .4s;}
   /* 맨 위로 버튼 */
   #totop{position:fixed;z-index:60;
     right:calc(16px + env(safe-area-inset-right));
@@ -2154,6 +2171,7 @@ function render(){
     var cds=pane?pane.querySelectorAll(".bean"):[];
     var bst=state._boot?1150:0,bgap=state._boot?110:75;
     for(ai=0;ai<cds.length;ai++){cds[ai].style.animationDelay=(bst+Math.min(ai,10)*bgap)+"ms";}
+    if(!state._boot)for(ai=0;ai<cds.length;ai++){cds[ai].style.animationDelay=(Math.min(ai,10)*105)+"ms";}
     var scs=pane?pane.querySelectorAll(".card"):[];
     for(ai=0;ai<scs.length;ai++){scs[ai].style.animationDelay=(bst+Math.min(ai,5)*(state._boot?120:85))+"ms";}
     var at=app.querySelector(".tab.on");
@@ -2398,19 +2416,27 @@ window.addEventListener("hashchange",function(){
   })();
 })();
 
-/* 맨 위로 버튼 — 일정 이상 스크롤하면 등장 */
+/* 스크롤 반응 — 맨 위로 버튼 · 헤더 패럴랙스 · 탭바 그림자 */
 (function(){
-  var btn=document.getElementById("totop"),shown=false,tick=false;
-  if(!btn)return;
+  var btn=document.getElementById("totop"),shown=false,tick=false,scrolled=false;
+  var root=document.documentElement,body=document.body;
 
   function upd(){
     tick=false;
-    var need=window.pageYOffset>640;
-    if(need!==shown){shown=need;btn.classList.toggle("show",need);}
+    var y=window.pageYOffset||0;
+    /* 헤더가 스크롤보다 느리게 밀려 올라가며 깊이를 만든다 */
+    root.style.setProperty("--sy",String(Math.min(y,600)));
+    var sc=y>36;
+    if(sc!==scrolled){scrolled=sc;body.classList.toggle("scrolled",sc);}
+    if(btn){
+      var need=y>640;
+      if(need!==shown){shown=need;btn.classList.toggle("show",need);}
+    }
   }
   window.addEventListener("scroll",function(){
     if(tick)return;tick=true;requestAnimationFrame(upd);
   },{passive:true});
+  upd();
 })();
 
 /* ============================================================
@@ -2451,12 +2477,12 @@ function flipPlay(prev){
     requestAnimationFrame(function(){
       for(var j=0;j<moved.length;j++){
         (function(e,k){
-          e.style.transition="transform .6s cubic-bezier(.2,1,.28,1)";
-          e.style.transitionDelay=(Math.min(k,8)*22)+"ms";
+          e.style.transition="transform .82s cubic-bezier(.16,1.12,.24,1)";
+          e.style.transitionDelay=(Math.min(k,8)*38)+"ms";
           e.style.transform="";
           setTimeout(function(){
             e.style.transition="";e.style.transitionDelay="";e.classList.remove("flip");
-          },820);
+          },1200);
         })(moved[j],j);
       }
     });
@@ -2595,10 +2621,10 @@ window.vote=function(id){
         var hf=document.createElement("span");
         hf.className="heartfly";hf.textContent="\u2665";
         var ang=(Math.PI*2*hi)/10+Math.random()*.5;
-        hf.style.setProperty("--dx",Math.round(Math.cos(ang)*(58+Math.random()*42))+"px");
-        hf.style.setProperty("--dy",Math.round(Math.sin(ang)*(50+Math.random()*34)-22)+"px");
+        hf.style.setProperty("--dx",Math.round(Math.cos(ang)*(80+Math.random()*60))+"px");
+        hf.style.setProperty("--dy",Math.round(Math.sin(ang)*(70+Math.random()*48)-30)+"px");
         hf.style.setProperty("--rot",Math.round(Math.random()*180-90)+"deg");
-        hf.style.fontSize=(14+Math.random()*10)+"px";
+        hf.style.fontSize=(18+Math.random()*14)+"px";
         nb.appendChild(hf);
       }
       var vr=document.createElement("span");
