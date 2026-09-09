@@ -563,6 +563,42 @@
     border:1px solid var(--walnutLt);box-shadow:0 4px 14px rgba(0,0,0,.5);
     display:none;align-items:center;justify-content:center;}
   #topBtn.show{display:flex;}
+
+/* Readability edition: preserve original section order and functionality. */
+:root{--ink:#faf7f0;--sub:#c5beb5;--metalDark:#b9b1a8;--metalFaint:#a59e95;--border:#48403b;--amber:#e7b477}
+body{font-size:16px;line-height:1.7}
+.wrap{max-width:1040px}
+h1{font-size:28px;line-height:1.35;letter-spacing:-.035em}
+h2.sec{font-size:20px;line-height:1.5;flex-wrap:wrap;gap:8px}
+header{padding:24px}.hdrow{gap:20px}.wordmark{height:30px;margin-bottom:14px}.eyebrow{font-size:12px;line-height:1.5;letter-spacing:.15em}.tagline{font-size:16px;line-height:1.7;margin-top:10px}
+.brandlock,.langwrap{transform:none!important;opacity:1!important;will-change:auto}.langbtn{font-size:14px;min-height:44px;padding:9px 12px}.tab{font-size:15px;min-height:44px}.sharetop,.admgear{height:44px;min-width:44px}.sharetop{font-size:14px}.tabbadge{font-size:12px}
+.votehint{padding:16px 18px;gap:12px}.votehint b{font-size:16px;line-height:1.6;margin-bottom:4px}.votehint span{font-size:14px;line-height:1.7}.votehint .vhicon{animation:none}
+.stats{gap:12px}.stat{padding:18px;min-width:0}.stat .lbl{font-size:14px;line-height:1.6}.stat .val{font-size:27px;line-height:1.45;margin-top:8px;overflow-wrap:anywhere}.stat .val span{font-size:17px!important}.stat .sub{font-size:14px;line-height:1.6;margin-top:5px}
+.nowsec{padding:20px;margin-bottom:22px}.beans{gap:16px}.bean{padding:22px;gap:14px;box-shadow:none;min-width:0}.bean.dim{opacity:1;background:#171617}.bean.dim .brand,.bean.dim .origin{color:var(--sub)}
+.brandrow{min-width:0;gap:12px;align-items:flex-start}.brandrow>div{min-width:0}.blogo{width:62px;height:62px;object-fit:contain;border-radius:10px}.bean .brand{font-size:14px;line-height:1.5;letter-spacing:.02em;color:var(--sub);margin-bottom:5px;overflow-wrap:anywhere}.bean .bname{font-size:23px;line-height:1.45;letter-spacing:-.03em;word-break:keep-all;overflow-wrap:anywhere}.medal{font-size:19px}
+.origin{font-size:15px;line-height:1.6;color:var(--sub)}.procpill,.nowbadge{font-size:12px;line-height:1.5;padding:5px 8px}.notetags{gap:7px}.ntag{font-size:14px;line-height:1.5;padding:5px 10px;max-width:100%;overflow-wrap:anywhere}.subnote{font-size:16px;line-height:1.8;color:var(--ink);overflow-wrap:anywhere}
+.beanfoot{margin-top:auto;padding-top:16px;gap:12px;flex-wrap:wrap}.price{font-size:23px;line-height:1.4;color:#f1c389;white-space:nowrap}.votebtn{min-height:46px;padding:10px 14px;font-size:14px;line-height:1.5}.bean.dim .price{color:var(--sub)}
+.muted{font-size:14px;line-height:1.7}.searchbox{min-height:48px;min-width:0;padding:0 12px}.searchbox input{font-size:16px;min-width:0;width:100%;padding:11px 0}.searchbox:focus-within{outline:2px solid var(--amber);outline-offset:2px}.chip{font-size:14px;line-height:1.4;min-height:44px;padding:9px 12px}.sel{font-size:16px!important;min-height:46px;max-width:100%}.resultbar{font-size:14px;line-height:1.6;gap:10px;flex-wrap:wrap;margin:16px 2px 12px}.morebtn{font-size:15px;line-height:1.5;min-height:48px;padding:13px;margin-top:12px}
+.barrow{gap:12px;margin-bottom:13px}.barlabel{font-size:14px;line-height:1.5;width:180px;white-space:normal;overflow-wrap:anywhere}.bartrack{height:23px;min-width:0}.barfill{font-size:13px;min-width:30px}.reqnudge{font-size:14px;line-height:1.7;margin-top:18px}.reqnudgebtn{font-size:14px;min-height:44px}
+label.fl{font-size:14px;line-height:1.5;margin-bottom:6px}.fi,input.fi,select.fi,textarea.fi{font-size:16px!important;min-height:48px;line-height:1.5}.btn,.notebtn,.saletoggle{font-size:14px;min-height:44px;line-height:1.5}.icobtn,.stepbtn{min-width:44px;min-height:44px}.grid2{gap:14px}.grid2>div{min-width:0}.reqitem{font-size:14px;line-height:1.7}.reqitem .dt{font-size:13px}.bulkrow input{font-size:16px;min-height:44px}.bulkrow .konm{font-size:14px}.pre{font-size:13px}.err,.fbwarn{font-size:14px}
+.sharesheet{max-height:90dvh;overflow:auto}.sharehd b{font-size:18px}.sharex{width:44px;height:44px}.sharescan{font-size:15px;line-height:1.7}.shareurl{font-size:13px;line-height:1.6}.sharebtn{min-height:48px;font-size:16px}#toast{font-size:14px;line-height:1.6}
+/* Never blur or hide reading content during scroll. */
+.rv,.rv.stat,.rv.fromtop,.rv.in,.mapc,.mapin{opacity:1!important;transform:none!important;filter:none!important}.rv .barfill{width:var(--w)!important}.tabpane.anim,.tabpane.anim *,.boot *{animation:none!important;filter:none!important}.nowdot{animation:none}.heartfly,.vring{display:none!important}
+@media(hover:hover){.bean:hover{transform:translateY(-2px);box-shadow:none}}
+@media(max-width:767px){
+ .wrap{padding:14px max(14px,env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+ header{padding:18px;margin-bottom:12px}.hdrow{gap:16px}h1{font-size:25px;line-height:1.4}.wordmark{height:26px;margin-bottom:12px}.eyebrow{font-size:12px}.tagline{font-size:15px;line-height:1.7}
+ .langwrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;width:100%;margin-top:0}.lsglobe,.langflag{display:none}.langbtn{font-size:14px;min-width:0;padding:8px 2px;justify-content:center}
+ .tabbar{margin-left:0;margin-right:0;padding-left:0;padding-right:0;gap:6px}.tabgroup{flex:1;min-width:0;padding:3px;gap:2px}.tab{flex:1;min-width:0;font-size:14px;line-height:1.4;padding:8px 5px;overflow-wrap:anywhere}.tab .ticon,.tabbadge{display:none}.sharetop{margin-left:0;padding:0 9px}.admgear{width:44px;flex-shrink:0}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:14px}.stat .lbl{font-size:14px}.stat .val{font-size:24px}.stat .val span{font-size:16px!important}.stat .sub{font-size:13px}
+ .votehint{padding:14px;gap:10px}.votehint b{font-size:15px}.votehint span{font-size:14px}.nowsec{padding:12px}.nowsec>h2.sec{font-size:19px;margin-bottom:14px!important}.beans{grid-template-columns:minmax(0,1fr);gap:13px}.bean{padding:16px;gap:12px}
+ .bean>div:first-child{flex-wrap:wrap;gap:12px!important}.bean>div:first-child>.brandrow{flex:1 1 100%}.bean>div:first-child>div:last-child{flex-direction:row!important;align-items:center!important;flex-wrap:wrap;gap:6px!important}.blogo{width:48px;height:48px;border-radius:8px}.brandrow{gap:11px}.bean .brand{font-size:14px}.bean .bname{font-size:21px;line-height:1.45}.origin{font-size:14px}.subnote{font-size:16px;line-height:1.75}.ntag{font-size:14px;padding:5px 8px}.beanfoot{padding-top:14px}.price{font-size:22px}.votebtn{min-height:46px;padding:10px 12px}
+ .sortbar.swipe{flex-wrap:wrap;overflow:visible;mask-image:none;-webkit-mask-image:none;gap:6px}.sortbar.swipe>span{font-size:14px!important;flex-basis:100%}.sortbar.swipe .sel{flex-basis:100%;width:100%;margin-left:0!important}.chip{padding:8px 10px}.barrow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.barlabel{width:auto;text-align:left;font-size:14px}.grid2{grid-template-columns:minmax(0,1fr)}.bulkrow{grid-template-columns:minmax(0,1fr)}.bulkhead{display:none}.reqcard>.btn{width:100%}
+ .sharesheet{width:100%;max-height:calc(100dvh - 20px);padding:20px 18px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain}.qrbox{width:clamp(150px,46vw,190px)}#topBtn{display:none!important}
+}
+@media(max-width:359px){header{padding:14px}h1{font-size:23px}.tab{font-size:13px}.sharetop{font-size:13px;padding:0 7px}.nowsec{padding:10px}.bean{padding:14px}.bean .bname{font-size:20px}.blogo{width:42px;height:42px}.beanfoot{gap:8px}.votebtn{font-size:13px;padding:10px}.price{font-size:21px}}
+@media(max-width:767px) and (orientation:landscape){.tabbar{position:relative}}
+
 </style>
 
 <div id="intro" aria-hidden="true">
@@ -574,7 +610,7 @@
   </div>
 </div>
 <div class="wrap" id="app"></div>
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <button id="totop" onclick="window.toTop()">&#9650;</button>
 <button id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="top">&#8679;</button>
 
@@ -1408,7 +1444,7 @@ function initFirebase(){
         for(k in v){if(v.hasOwnProperty(k)&&v[k])arr.push(v[k]);}
         state.beans=arr;
       }
-      else{state.beans=SEED.slice();beansRef.set(SEED);}
+      else{state.beans=[];}
       render();
     },function(err){console.error("FB beans:",err);state.fbReady=false;loadLocal();});
     logosRef.on("value",function(snap){state.brandLogos=snap.val()||{};render();},
@@ -2295,7 +2331,7 @@ window.toggleMyFilter=function(){
    ============================================================ */
 var shareOpen=false,sharePushed=false;
 
-function shareURL(){return location.href.split("#")[0];}
+function shareURL(){return location.protocol==="file:"?"https://dennisoh0714.github.io/beans-log/":location.href.split("#")[0];}
 
 window.openShare=function(){
   if(shareOpen)return;
@@ -2898,3 +2934,6 @@ state.tab=tabFromHash();
 initFirebase();
 render();
 </script>
+
+</body>
+</html>
