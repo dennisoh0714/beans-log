@@ -599,6 +599,21 @@ summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 }
 @media(max-width:359px){.bean .bname{font-size:20px}.browsebar>.sel{flex-basis:100%;width:100%}}
 
+
+/* Sharing: primary actions first, selectable link and optional QR. */
+.sharehint{color:var(--sub);font-size:15px;line-height:1.6;margin:0}
+#sharewrap .shareacts{margin-top:16px}
+.sharelabel{display:block;color:var(--sub);font-size:14px;margin-top:12px}
+#sharewrap .shareurl{display:block;box-sizing:border-box;width:100%;min-width:0;font-size:16px;text-align:left;color:var(--ink);min-height:48px}
+#sharestatus{color:var(--metal);font-size:14px;line-height:1.6;margin:12px 0 0}
+#sharestatus:empty{display:none}
+.shareqr{border-top:1px solid var(--border);margin-top:20px;padding-top:8px}
+.shareqr summary{cursor:pointer;min-height:48px;align-content:center;color:var(--ink);font-size:15px}
+.shareqr .qrbox{margin-top:12px}
+#sharewrap button:disabled{opacity:.6;cursor:wait}
+#sharewrap :focus-visible{outline:2px solid var(--metal);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#sharewrap *,#sharewrap.in *{animation:none;transition:none}}
+
 </style>
 </head>
 <body>
@@ -2335,82 +2350,92 @@ window.toggleMyFilter=function(){
 /* ============================================================
    공유 시트 — QR + 링크 복사 + 네이티브 공유
    ============================================================ */
-var shareOpen=false,sharePushed=false;
-
-function shareURL(){return location.protocol==="file:"?"https://dennisoh0714.github.io/beans-log/":location.href.split("#")[0];}
-
+var shareOpen=false,sharePushed=false,shareReturnFocus=null,shareOverflow="";
+var SHARE_MESSAGES={
+ ko:{hint:"앱으로 보내거나 링크를 복사해 공유하세요.",manual:"자동 복사가 안 되면 아래 주소를 길게 눌러 복사해 주세요.",error:"공유창을 열지 못했어요. 링크 복사를 이용해 주세요.",url:"공유할 링크",qr:"QR 코드로 공유"},
+ en:{hint:"Send to an app or copy the link.",manual:"Select and copy the address below manually.",error:"Sharing could not open. Please copy the link instead.",url:"Link to share",qr:"Share with a QR code"},
+ zh:{hint:"发送到其他应用，或复制链接分享。",manual:"请长按下方地址并手动复制。",error:"无法打开分享窗口，请复制链接。",url:"分享链接",qr:"通过二维码分享"},
+ th:{hint:"ส่งไปยังแอปหรือคัดลอกลิงก์เพื่อแชร์",manual:"กดที่อยู่ด้านล่างค้างไว้แล้วคัดลอก",error:"เปิดหน้าต่างแชร์ไม่ได้ กรุณาคัดลอกลิงก์",url:"ลิงก์สำหรับแชร์",qr:"แชร์ด้วย QR"}
+};
+function shareText(key){return (SHARE_MESSAGES[state.lang]||SHARE_MESSAGES.ko)[key];}
+function shareURL(){return "https://dennisoh0714.github.io/beans-log/";}
+function shareStatus(message){
+ var el=document.getElementById("sharestatus");
+ if(el)el.textContent=message;
+}
 window.openShare=function(){
-  if(shareOpen)return;
-  shareOpen=true;
-  var url=shareURL(),qrsvg="";
-  try{qrsvg=QR.svg(url,{fg:"#121113",bg:"#f4f1ea",quiet:2,rx:0});}
-  catch(e){qrsvg='<div class="qrfail">'+esc(url)+'</div>';}
-
-  var el=document.createElement("div");
-  el.id="sharewrap";
-  el.innerHTML='<div class="sharebd" onclick="window.closeShare()"></div>'+
-    '<div class="sharesheet" role="dialog" aria-modal="true" aria-label="'+esc(t("shareTitle"))+'">'+
-      '<div class="sharehd"><b>'+esc(t("shareTitle"))+'</b>'+
-        '<button class="sharex" onclick="window.closeShare()" aria-label="'+esc(t("shareClose"))+'">&#10005;</button></div>'+
-      '<div class="qrbox">'+qrsvg+'</div>'+
-      '<p class="sharescan">'+esc(t("shareScan"))+'</p>'+
-      '<div class="shareurl">'+esc(url.replace(/^https?:\/\//,""))+'</div>'+
-      '<div class="shareacts">'+
-        (navigator.share?'<button class="sharebtn prime" onclick="window.shareNative()">&#8599; '+esc(t("shareNative"))+'</button>':"")+
-        '<button class="sharebtn" onclick="window.copyLink()">&#128279; '+esc(t("shareCopy"))+'</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(el);
-  document.body.style.overflow="hidden";
-  requestAnimationFrame(function(){el.classList.add("in");});
-  var fb=el.querySelector(".sharex");
-  if(fb&&fb.focus)try{fb.focus({preventScroll:true});}catch(e){}
-  if(!sharePushed){try{history.pushState({cdnShare:1},"");sharePushed=true;}catch(e){}}
+ if(shareOpen||sharePushed)return;
+ shareOpen=true;shareReturnFocus=document.activeElement;
+ shareOverflow=document.body.style.overflow;
+ var url=shareURL(),qrsvg="";
+ try{qrsvg=QR.svg(url,{fg:"#121113",bg:"#f4f1ea",quiet:4,rx:0});}
+ catch(e){qrsvg='<div class="qrfail">'+esc(url)+'</div>';}
+ var el=document.createElement("div");el.id="sharewrap";
+ el.innerHTML='<div class="sharebd" onclick="window.closeShare()"></div>'+
+ '<div class="sharesheet" role="dialog" aria-modal="true" aria-labelledby="sharetitle" aria-describedby="sharehint">'+
+ '<div class="sharehd"><b id="sharetitle">'+esc(t("shareTitle"))+'</b><button type="button" class="sharex" onclick="window.closeShare()" aria-label="'+esc(t("shareClose"))+'">&#10005;</button></div>'+
+ '<p id="sharehint" class="sharehint">'+esc(shareText("hint"))+'</p>'+
+ '<div class="shareacts">'+
+ (navigator.share?'<button type="button" id="sharenative" class="sharebtn prime" onclick="window.shareNative()">&#8599; '+esc(t("shareNative"))+'</button>':"")+
+ '<button type="button" class="sharebtn'+(navigator.share?"":" prime")+'" onclick="window.copyLink()">&#128279; '+esc(t("shareCopy"))+'</button></div>'+
+ '<p id="sharestatus" role="status" aria-live="polite"></p>'+
+ '<label class="sharelabel" for="sharelink">'+esc(shareText("url"))+'</label>'+
+ '<input id="sharelink" class="shareurl" type="text" readonly value="'+esc(url)+'" onclick="this.select()" spellcheck="false">'+
+ '<details class="shareqr"><summary>'+esc(shareText("qr"))+'</summary><div class="qrbox">'+qrsvg+'</div><p class="sharescan">'+esc(t("shareScan"))+'</p></details></div>';
+ document.body.appendChild(el);document.body.style.overflow="hidden";
+ requestAnimationFrame(function(){if(el.isConnected)el.classList.add("in");});
+ el.querySelector(".shareacts button").focus({preventScroll:true});
+ try{history.pushState({cdnShare:1},"");sharePushed=true;}catch(e){}
 };
-
 window.closeShare=function(fromPop){
-  if(!shareOpen)return;
-  shareOpen=false;
-  var el=document.getElementById("sharewrap");
-  if(el){
-    el.classList.remove("in");
-    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},260);
-  }
-  document.body.style.overflow="";
-  if(sharePushed){
-    sharePushed=false;
-    if(fromPop!==true){try{history.back();}catch(e){}}
-  }
+ if(!shareOpen)return;
+ shareOpen=false;
+ var el=document.getElementById("sharewrap");
+ if(el)el.remove();
+ document.body.style.overflow=shareOverflow;
+ if(shareReturnFocus&&shareReturnFocus.isConnected)shareReturnFocus.focus({preventScroll:true});
+ if(sharePushed&&fromPop!==true){
+   try{history.back();}catch(e){sharePushed=false;}
+ }else sharePushed=false;
 };
-
-window.shareNative=function(){
-  if(!navigator.share)return window.copyLink();
-  navigator.share({title:t("appTitle"),text:t("appTagline"),url:shareURL()})["catch"](function(){});
+window.shareNative=async function(){
+ if(!navigator.share)return window.copyLink();
+ var button=document.getElementById("sharenative");
+ if(button&&button.disabled)return;
+ if(button)button.disabled=true;
+ try{
+   await navigator.share({title:t("appTitle"),text:t("appTagline"),url:shareURL()});
+ }catch(e){
+   if(!e||e.name!=="AbortError")shareStatus(shareText("error"));
+ }finally{if(button)button.disabled=false;}
 };
-
-window.copyLink=function(){
-  var url=shareURL();
-  function done(){flash(t("linkCopied"));window.closeShare();}
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(done,fallback);
-  }else fallback();
-  function fallback(){
-    try{
-      var ta=document.createElement("textarea");
-      ta.value=url;ta.setAttribute("readonly","");
-      ta.style.position="fixed";ta.style.top="-1000px";
-      document.body.appendChild(ta);ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      done();
-    }catch(e){flash(url);}
-  }
+window.copyLink=async function(){
+ var url=shareURL(),copied=false;
+ try{if(navigator.clipboard&&navigator.clipboard.writeText){
+   await navigator.clipboard.writeText(url);copied=true;
+ }}catch(e){}
+ if(!copied){
+   var input=document.getElementById("sharelink");
+   if(input){
+     input.focus();input.select();input.setSelectionRange(0,input.value.length);
+     try{copied=document.execCommand("copy")===true;}catch(e){}
+   }
+ }
+ shareStatus(copied?t("linkCopied"):shareText("manual"));
 };
-
-/* 뒤로가기 / Esc 로 닫기 */
-window.addEventListener("popstate",function(){if(shareOpen)window.closeShare(true);});
+window.addEventListener("popstate",function(){
+ if(shareOpen)window.closeShare(true);
+ sharePushed=false;
+});
 document.addEventListener("keydown",function(e){
-  if(shareOpen&&(e.key==="Escape"||e.keyCode===27))window.closeShare();
+ if(!shareOpen)return;
+ if(e.key==="Escape"||e.keyCode===27){e.preventDefault();window.closeShare();return;}
+ if(e.key!=="Tab")return;
+ var sheet=document.querySelector("#sharewrap .sharesheet");
+ var items=Array.prototype.filter.call(sheet.querySelectorAll("button:not(:disabled),input,summary"),function(el){return el.getClientRects().length>0;});
+ var first=items[0],last=items[items.length-1];
+ if(e.shiftKey&&(document.activeElement===first||!sheet.contains(document.activeElement))){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&(document.activeElement===last||!sheet.contains(document.activeElement))){e.preventDefault();first.focus();}
 });
 
 /* 구버전 호출 호환 */
