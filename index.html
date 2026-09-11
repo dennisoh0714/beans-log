@@ -1430,10 +1430,10 @@ function initAdminAuth(){
     state.authed=false;
     render();
     if(!user)return;
-    adminRoleRef=firebase.database().ref("admins").child(user.uid);
+    adminRoleRef=firebase.database().ref("admins");
     adminRoleRef.on("value",function(snap){
       if(generation!==authGeneration)return;
-      state.authed=snap.val()===true;
+      state.authed=snap.val()===user.uid;
       render();
       if(!state.authed)authError("이 계정에 관리자 권한이 없습니다. Firebase 관리자 설정을 확인해 주세요.");
     },function(){
@@ -2851,4 +2851,3 @@ render();
 
 </body>
 </html>
-
