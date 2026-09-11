@@ -646,6 +646,26 @@ summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
  .sortpill:hover{transform:none}
 }
 
+
+/* Roastery nameplates: large original logos in a framed, dedicated surface. */
+.bean .brandrow.roasterplaque{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:18px 18px 14px;margin-bottom:20px;border:1px solid #a77b505e;border-radius:18px;background:linear-gradient(135deg,#4c382940,#201b19 48%,#302622);box-shadow:inset 0 1px 0 #f9d5a726,0 8px 22px #0003;isolation:isolate}
+.roasterplaque:before{content:"";position:absolute;inset:5px;border:1px solid #cda57422;border-radius:13px;pointer-events:none;z-index:-1}
+.bean .roasterplate{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:min(100%,240px);height:142px;padding:12px 18px;border-radius:10px;background:#f4f1ea;box-shadow:0 3px 0 #0003,0 7px 18px #0004,inset 0 1px #fff;overflow:hidden}
+.bean .roasterplaque .blogo{display:block;width:100%;height:100%;max-width:204px;max-height:118px;object-fit:contain;object-position:center;border:0;border-radius:2px;background:transparent;box-shadow:none;flex-shrink:1}
+.bean .roasterplaque .blogo[hidden],.roasterfallback[hidden]{display:none}
+.bean .roasterplaque .brand{margin:0;color:#e7c69e;font-size:15px;font-weight:700;line-height:1.5;text-align:center;letter-spacing:.04em;overflow-wrap:anywhere}
+.roasterfallback{color:#403126;font-size:24px;font-weight:800;line-height:1.4;text-align:center;overflow-wrap:anywhere}
+@media(max-width:639px){
+ .bean .brandrow.roasterplaque{padding:14px 14px 12px;gap:10px;margin-bottom:16px;border-radius:15px}
+ .bean .roasterplate{width:min(100%,212px);height:122px;padding:10px 16px}
+ .bean .roasterplaque .blogo{max-height:102px}
+ .bean .roasterplaque .brand{font-size:14px}
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .bean .roasterplate{transition:transform .4s,box-shadow .4s}
+ .bean .roasterplaque:hover .roasterplate{transform:translateY(-3px);box-shadow:0 5px 0 #0003,0 12px 24px #0005}
+}
+
 </style>
 </head>
 <body>
@@ -1736,7 +1756,7 @@ function statCard(ico,lbl,val,sub){
 function beanCardHtml(b,l,medal){
   var voted=state.myVotes.indexOf(b.id)>=0;
   var logo=state.brandLogos[b.brand];
-  var logoHtml=logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>';
+  var logoHtml=logo?'<img class="blogo" src="'+esc(logo)+'" alt="'+esc(b.brand)+'" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"/><span class="roasterfallback" hidden>'+esc(brandName(b.brand,l))+'</span>':'<span class="roasterfallback">'+esc(brandName(b.brand,l))+'</span>';
   var onSale=isOnSale(b);
   var badge=onSale?'<span class="nowbadge">'+esc(t("availableLabel"))+'</span>':'<span class="soldoutbadge">'+esc(t("soldOutLabel"))+'</span>';
   var sub=subnoteText(b,l);
@@ -1748,7 +1768,7 @@ function beanCardHtml(b,l,medal){
     notesHtml+='<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>';
   }
   var h='<div class="bean'+(onSale?"":" dim")+'" data-id="'+esc(b.id)+'">'+
-    '<div class="brandrow">'+logoHtml+
+    '<div class="brandrow roasterplaque"><div class="roasterplate">'+logoHtml+'</div>'+
     '<div class="brand">'+esc(brandName(b.brand,l))+'</div></div>'+
     '<h3 class="bname">'+medalHtml+esc(beanName(b,l))+'</h3>'+
     '<div class="beanmeta">'+badge+'<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div>'+
