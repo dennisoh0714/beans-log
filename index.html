@@ -623,6 +623,10 @@ header{border-color:#ad825b88;box-shadow:0 18px 65px #0005,inset 0 1px #efd2a333
 @media(hover:hover){.atlas-country:hover{border-color:#e8be84}.bean:hover{border-color:#d5ac78;box-shadow:0 14px 32px #0005}}
 @media(max-width:767px){.origin-atlas{padding:16px;border-radius:18px;margin-bottom:18px}.atlas-layout{grid-template-columns:minmax(0,1fr);gap:12px}.origin-atlas .map svg{min-height:175px;max-height:230px}.atlas-countries{max-height:none;overflow:visible;gap:8px}.atlas-country{width:auto;flex:1 1 130px;font-size:14px}.mapin text{display:none}.atlas-hint{margin-top:12px}.browsecontrols{padding:12px}.atlas-heading h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){header::before,header::after,.mapin{animation:none!important}.bean,.atlas-country{transition:none!important}}
+/* Optional map tab; compact, readable bean browsing. */
+header{padding:20px 24px;margin-bottom:18px}header h1{font-size:clamp(23px,3vw,32px);line-height:1.4}.tagline{max-width:52ch;color:#c9c3bb}
+.tabgroup{gap:4px}.tab.on{background:#ba8b57;color:#171412;box-shadow:0 2px 10px #0002}.tab{white-space:nowrap}.active-origin{margin:0 0 14px}.beans{align-items:stretch;gap:18px}.bean .subnote{line-height:1.7}.bean .origin{line-height:1.6}.browsecontrols{box-shadow:none;background:#1d1c1d;border-color:#514337}.tabbar{gap:10px}
+@media(max-width:767px){header{padding:16px;margin-bottom:12px}.tabbar{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}.tabgroup{grid-column:1 / -1;display:flex;width:100%;box-sizing:border-box}.tab{flex:1;min-height:46px;padding:9px 5px;font-size:14px}.sharetop{justify-self:end;margin-left:0}.admgear{grid-column:2}.beans{gap:14px}.bean{padding:18px}.tagline{font-size:14px;line-height:1.6}.browsebar{gap:10px}.browsecontrols{margin-bottom:16px}.origin-atlas{margin-top:4px}}
 </style>
 </head>
 <body>
@@ -1744,6 +1748,34 @@ function beanCardHtml(b,l,medal){
 /* ============================================================
    대시보드
    ============================================================ */
+function renderOriginTab(){
+  var beans=state.beans||[],l=state.lang,i;
+  /* 지도 */
+  var cm={};
+  for(i=0;i<beans.length;i++){
+    var b=beans[i];
+    var c=C_BY_ID[b.country];
+    if(!c)continue;
+    if(!cm[b.country])cm[b.country]={id:b.country,name:c.names[l],lat:c.lat,lon:c.lon,votes:0,count:0};
+    cm[b.country].votes+=(b.votes||0);cm[b.country].count++;
+  }
+  var cstats=[],k;
+  for(k in cm){if(cm.hasOwnProperty(k))cstats.push(cm[k]);}
+  var atlas='<section class="origin-atlas" id="mapsec" aria-labelledby="atlas-title">'+
+     '<div class="atlas-heading"><div><span class="atlas-kicker">DENNIS · ORIGIN ATLAS</span>'+
+     '<h2 id="atlas-title">'+esc(t("mapTitle"))+'</h2></div>'+
+     (state.countryFilter?'<button class="chip on" onclick="window.pickCountry(\''+state.countryFilter+'\')">&#10005; '+esc(countryName(state.countryFilter,l))+' &#183; '+esc(t("mapClear"))+'</button>':"")+
+     '</div><div class="atlas-layout"><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div><div class="atlas-countries">';
+  cstats.sort(function(a,b){return b.count-a.count;});
+  for(i=0;i<cstats.length;i++){
+    var origin=cstats[i];
+    atlas+='<button class="atlas-country" aria-pressed="'+(state.countryFilter===origin.id)+'" onclick="window.pickCountry(\''+origin.id+'\')">'+esc(origin.name)+'<span>'+origin.count+esc(t("unitKind"))+'</span></button>';
+  }
+  atlas+='</div></div><p class="atlas-hint">'+esc(t("archiveLabel"))+' · '+esc(t("mapHint"))+'</p></section>';
+  return atlas;
+
+}
+
 function renderDash(){
   var l=state.lang, beans=state.beans;
   var totalVotes=0,i;
@@ -1789,29 +1821,6 @@ function renderDash(){
   }
   secTail+='</div>';
 
-  /* 지도 */
-  var cm={};
-  for(i=0;i<beans.length;i++){
-    var b=beans[i];
-    var c=C_BY_ID[b.country];
-    if(!c)continue;
-    if(!cm[b.country])cm[b.country]={id:b.country,name:c.names[l],lat:c.lat,lon:c.lon,votes:0,count:0};
-    cm[b.country].votes+=(b.votes||0);cm[b.country].count++;
-  }
-  var cstats=[],k;
-  for(k in cm){if(cm.hasOwnProperty(k))cstats.push(cm[k]);}
-  var atlas='<section class="origin-atlas" id="mapsec" aria-labelledby="atlas-title">'+
-     '<div class="atlas-heading"><div><span class="atlas-kicker">DENNIS · ORIGIN ATLAS</span>'+
-     '<h2 id="atlas-title">'+esc(t("mapTitle"))+'</h2></div>'+
-     (state.countryFilter?'<button class="chip on" onclick="window.pickCountry(\''+state.countryFilter+'\')">&#10005; '+esc(countryName(state.countryFilter,l))+' &#183; '+esc(t("mapClear"))+'</button>':"")+
-     '</div><div class="atlas-layout"><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div><div class="atlas-countries">';
-  cstats.sort(function(a,b){return b.count-a.count;});
-  for(i=0;i<cstats.length;i++){
-    var origin=cstats[i];
-    atlas+='<button class="atlas-country" aria-pressed="'+(state.countryFilter===origin.id)+'" onclick="window.pickCountry(\''+origin.id+'\')">'+esc(origin.name)+'<span>'+origin.count+esc(t("unitKind"))+'</span></button>';
-  }
-  atlas+='</div></div><p class="atlas-hint">'+esc(t("archiveLabel"))+' · '+esc(t("mapHint"))+'</p></section>';
-  h+=atlas;
 
   /* Search and availability apply to the same list. */
   h+='<section class="browsecontrols" aria-label="'+esc(t("searchPh"))+'">'+
@@ -1826,6 +1835,7 @@ function renderDash(){
     '<select class="sel" aria-label="'+esc(t("procAll"))+'" onchange="window.setProcFilter(this.value)"><option value="">'+esc(t("procAll"))+'</option>';
   for(i=0;i<PROCESSES.length;i++)h+='<option value="'+PROCESSES[i]+'"'+(state.processFilter===PROCESSES[i]?' selected':'')+'>'+esc(procLabel(PROCESSES[i],l))+'</option>';
   h+='</select>'+(state.myVotes.length?'<button class="chip'+(state.myFilter?' on':'')+'" aria-pressed="'+state.myFilter+'" onclick="window.toggleMyFilter()">'+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':'')+'</div></details></section>';
+  if(state.countryFilter)h+='<div class="active-origin"><button class="chip on" onclick="window.pickCountry(\''+state.countryFilter+'\')">'+esc(countryName(state.countryFilter,l))+' · '+esc(t("mapClear"))+' &#10005;</button></div>';
   h+='<div id="beanresults">'+renderBeanResults()+'</div>';
   h+='<details class="insights"'+(state._insightsOpen?' open':'')+' ontoggle="state._insightsOpen=this.open"><summary>'+esc(t("rankTitle"))+'</summary><div class="insightbody">'+secondary+secTail+'</div></details>';
   h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+'<button class="reqnudgebtn" onclick="window.setTab(\'req\')">'+esc(t("reqNudgeBtn"))+'</button></div>';
@@ -2218,6 +2228,7 @@ function render(){
   var reqN=state.requests.length;
   h+='<div class="tabbar"><div class="tabgroup">'+
      '<button class="tab'+(state.tab==="dash"?" on":"")+'"'+(state.tab==="dash"?' aria-current="true"':'')+' onclick="window.setTab(\'dash\')">'+ICON.dash+' '+esc(t("tabDash"))+'</button>'+
+     '<button class="tab'+(state.tab==="map"?" on":"")+'"'+(state.tab==="map"?' aria-current="true"':'')+' onclick="window.setTab(\'map\')">'+esc(t("mapTitle"))+'</button>'+
      '<button class="tab'+(state.tab==="req"?" on":"")+'"'+(state.tab==="req"?' aria-current="true"':'')+' onclick="window.setTab(\'req\')">'+ICON.cup+' '+esc(t("tabReq"))+
      (reqN?'<span class="tabbadge">'+(reqN>99?"99+":reqN)+'</span>':"")+'</button>'+
      '</div>'+
@@ -2228,6 +2239,7 @@ function render(){
   var anim=state._tabAnim; state._tabAnim=false;
   h+='<div class="tabpane'+(anim?" anim":"")+(state._boot?" hold":"")+'">';
   if(state.tab==="dash")h+=safeRender(renderDash);
+  else if(state.tab==="map")h+=safeRender(renderOriginTab);
   else if(state.tab==="req")h+=safeRender(renderRequestTab);
   else h+=safeRender(renderAdmin);
   h+='</div>';
@@ -2342,6 +2354,12 @@ window.setProcFilter=function(v){state.processFilter=v;state.listLimit=LIST_STEP
 window.setAvailability=function(v){state.saleFilter=v;state.listLimit=LIST_STEP;render();};
 window.toggleSaleFilter=function(){state.saleFilter=!state.saleFilter;state.listLimit=LIST_STEP;state._softAnim=true;render();};
 window.pickCountry=function(id){
+  if(state.tab==="map"){
+    state.countryFilter=id;
+    state.listLimit=LIST_STEP;
+    window.setTab("dash");
+    return;
+  }
   state.countryFilter=state.countryFilter===id?"":id;
   state.listLimit=LIST_STEP;state._softAnim=true;render();
   /* 지도는 목록 아래에 있으므로 결과가 보이도록 이동 */
@@ -2453,7 +2471,7 @@ window.toTop=function(){window.scrollTo({top:0,behavior:"smooth"});};
    ============================================================ */
 function tabFromHash(){
   var hp=(location.hash||"").replace(/^#\/?/,"");
-  return (hp==="req"||hp==="admin")?hp:"dash";
+  return (hp==="req"||hp==="admin"||hp==="map")?hp:"dash";
 }
 window.addEventListener("hashchange",function(){
   var nt=tabFromHash();
