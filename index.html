@@ -659,6 +659,26 @@ summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
  .bean .roastermark{width:80px;height:80px;flex-basis:80px}
  .bean .roasterhead .brand{font-size:16px}
 }
+
+/* Discoverable filters with on-demand statistics, ranking and origin map. */
+.filterdetails{border:1px solid #a77b5066;border-radius:16px;background:#211d1c;margin-top:16px;overflow:hidden}
+.filterdetails>summary.exploresummary,.exploresection>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:16px;min-height:56px;box-sizing:border-box}
+.filterdetails>summary::-webkit-details-marker,.exploresection>summary::-webkit-details-marker{display:none}
+.exploresummary b{display:block;color:var(--ink);font-size:16px}
+.exploresummary small,.exploresection small{display:block;color:var(--sub);font-size:14px;line-height:1.6;margin-top:5px}
+.exploreplus{font-size:26px;font-weight:400;color:#e3b782;flex-shrink:0;transition:transform .25s}
+.filterdetails[open]>summary .exploreplus,.exploresection[open]>summary .exploreplus{transform:rotate(45deg)}
+.filterdetails>.filterbody{padding:16px;border-top:1px solid var(--border);margin:0}
+.exploresections{padding:0 12px 12px;display:grid;gap:8px}
+.exploresection{border:1px solid var(--border);border-radius:12px;background:#191718;min-width:0}
+.exploresection>summary b{font-size:16px;color:#e7c69e}
+.explorecontent{padding:0 12px 12px;min-width:0}
+.explorecontent>.card{margin-bottom:0!important}
+.explorecontent .stats{margin-top:12px}
+.exploresummary:focus-visible,.exploresection>summary:focus-visible{outline:2px solid #e4b77c;outline-offset:-4px}
+@media(max-width:639px){.explorecontent{padding:0 8px 8px}.explorecontent .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.exploreplus{transition:none}}
+
 </style>
 </head>
 <body>
@@ -1799,6 +1819,23 @@ function renderSortControls(){
  return h+'</select></div></div></div>';
 }
 
+
+var EXPLORE_LABELS={
+ ko:["필터 · 원두 둘러보기","가공법 필터 · 통계 · 인기 순위 · 산지 지도","통계","인기 순위","산지 지도","원두 수와 투표 현황","많이 선택한 원두 살펴보기","나라를 눌러 원두 찾기"],
+ en:["Filters & bean explorer","Process filters · stats · ranking · origins","Stats","Ranking","Origin map","Bean and vote totals","Explore the most popular beans","Select a country to find beans"],
+ zh:["筛选与咖啡豆探索","处理法筛选 · 统计 · 排名 · 产地地图","统计","人气排名","产地地图","咖啡豆与投票数量","查看热门咖啡豆","选择国家查找咖啡豆"],
+ th:["ตัวกรองและสำรวจเมล็ดกาแฟ","กระบวนการ · สถิติ · อันดับ · แผนที่","สถิติ","อันดับยอดนิยม","แผนที่แหล่งปลูก","จำนวนเมล็ดกาแฟและโหวต","ดูเมล็ดกาแฟยอดนิยม","เลือกประเทศเพื่อค้นหาเมล็ดกาแฟ"]
+};
+function exploreLabels(){return EXPLORE_LABELS[state.lang]||EXPLORE_LABELS.ko;}
+window.toggleExplore=function(el,key){
+ state._exploreOpen=state._exploreOpen||{};
+ state._exploreOpen[key]=el.open;
+ if(el.open)setupReveal(document.getElementById("app"));
+};
+function exploreSection(key,title,hint,content){
+ return '<details class="exploresection"'+(state._exploreOpen&&state._exploreOpen[key]?' open':'')+' ontoggle="window.toggleExplore(this,\''+key+'\')"><summary><span><b>'+esc(title)+'</b><small>'+esc(hint)+'</small></span><span class="exploreplus" aria-hidden="true">+</span></summary><div class="explorecontent">'+content+'</div></details>';
+}
+
 function renderDash(){
   var l=state.lang, beans=state.beans;
   var totalVotes=0,i;
@@ -1844,6 +1881,7 @@ function renderDash(){
   }
   secTail+='</div>';
 
+  var rankContent=secTail;secTail='';
   /* 지도 */
   var cm={};
   for(i=0;i<beans.length;i++){
@@ -1868,12 +1906,15 @@ function renderDash(){
     '<div class="browsebar"><div class="availability">'+
     '<button class="chip'+(state.saleFilter?' green':'')+'" aria-pressed="'+state.saleFilter+'" onclick="window.setAvailability(true)">'+esc(t("availableLabel"))+'</button>'+
     '<button class="chip'+(!state.saleFilter?' on':'')+'" aria-pressed="'+(!state.saleFilter)+'" onclick="window.setAvailability(false)">'+esc(t("archiveLabel"))+'</button></div>'+
-    '</div>'+renderSortControls()+'<details class="filterdetails"'+(state._filterOpen?' open':'')+' ontoggle="state._filterOpen=this.open"><summary>'+esc(t("moreFiltersLabel"))+'</summary><div class="filterbody">'+
+    '</div>'+renderSortControls()+'<details class="filterdetails"'+(state._filterOpen?' open':'')+' ontoggle="state._filterOpen=this.open"><summary class="exploresummary"><span><b>'+esc(exploreLabels()[0])+'</b><small>'+esc(exploreLabels()[1])+'</small></span><span class="exploreplus" aria-hidden="true">+</span></summary><div class="filterbody">'+
     '<select class="sel" aria-label="'+esc(t("procAll"))+'" onchange="window.setProcFilter(this.value)"><option value="">'+esc(t("procAll"))+'</option>';
   for(i=0;i<PROCESSES.length;i++)h+='<option value="'+PROCESSES[i]+'"'+(state.processFilter===PROCESSES[i]?' selected':'')+'>'+esc(procLabel(PROCESSES[i],l))+'</option>';
-  h+='</select>'+(state.myVotes.length?'<button class="chip'+(state.myFilter?' on':'')+'" aria-pressed="'+state.myFilter+'" onclick="window.toggleMyFilter()">'+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':'')+'</div></details></section>';
+  h+='</select>'+(state.myVotes.length?'<button class="chip'+(state.myFilter?' on':'')+'" aria-pressed="'+state.myFilter+'" onclick="window.toggleMyFilter()">'+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':'')+'</div><div class="exploresections">'+
+    exploreSection("stats",exploreLabels()[2],exploreLabels()[5],secondary)+
+    exploreSection("ranking",exploreLabels()[3],exploreLabels()[6],rankContent)+
+    exploreSection("map",exploreLabels()[4],exploreLabels()[7],secTail)+
+    '</div></details></section>';
   h+='<div id="beanresults">'+renderBeanResults()+'</div>';
-  h+='<details class="insights"'+(state._insightsOpen?' open':'')+' ontoggle="state._insightsOpen=this.open"><summary>'+esc(t("insightsLabel"))+'</summary><div class="insightbody">'+secondary+secTail+'</div></details>';
   h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+'<button class="reqnudgebtn" onclick="window.setTab(\'req\')">'+esc(t("reqNudgeBtn"))+'</button></div>';
   return h;
 }
