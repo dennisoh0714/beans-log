@@ -1,9 +1,12 @@
+<!doctype html>
+<html lang="ko">
+<head>
 <!--
   ============================================================
   카페 데니스 원두 노트 리스트 — 외부 배포용 index.html (v4 개선판)
   GitHub Pages + Firebase Realtime Database
 
-  ▣ 관리자 비밀번호: 아래 ADMIN_PW (기본 "dennis")
+  ▣ 관리자 로그인: Firebase Authentication + /admins/{uid} 권한 (FIREBASE_SETUP.md 참고)
   ▣ 백업: 관리자 탭 맨 아래 JSON 내보내기 (주 1회 권장)
   ============================================================
 -->
@@ -26,6 +29,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <style>
   :root{
@@ -214,39 +218,6 @@
     animation:loadDot 1s cubic-bezier(.3,1.2,.4,1) infinite;}
   .loaddots span:nth-child(2){animation-delay:.15s;}
   .loaddots span:nth-child(3){animation-delay:.3s;}
-  /* ===== 오프닝 커튼 ===== */
-  #intro{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(120% 90% at 50% 42%,#241d18 0%,#141214 55%,#0d0c0e 100%);
-    animation:introGlow 3s ease-in-out infinite alternate;}
-  #intro.out{animation:introOut .9s cubic-bezier(.5,0,.75,0) forwards;pointer-events:none;}
-  @keyframes introGlow{from{background-size:100% 100%;}to{background-size:118% 118%;}}
-  @keyframes introOut{to{opacity:0;transform:scale(1.14);filter:blur(6px);}}
-  .introbox{position:relative;text-align:center;padding:0 24px;}
-  .introcafe{font-size:12px;font-weight:800;letter-spacing:.55em;color:var(--amber);
-    margin-bottom:14px;text-indent:.55em;animation:introSub .8s .15s ease both;}
-  .intrologo{display:block;width:min(62vw,300px);height:auto;margin:0 auto;
-    filter:drop-shadow(0 12px 34px rgba(0,0,0,.65));
-    animation:introStamp 1.15s .35s cubic-bezier(.2,1.7,.3,1) both;}
-  @keyframes introStamp{
-    0%{opacity:0;transform:scale(2.6) rotate(-9deg);filter:blur(16px);}
-    58%{opacity:1;transform:scale(.9) rotate(2.5deg);filter:blur(0);}
-    80%{transform:scale(1.06) rotate(-1deg);}
-    100%{opacity:1;transform:none;}}
-  .introrule{height:1.5px;width:0;margin:22px auto 16px;border-radius:2px;
-    background:linear-gradient(90deg,transparent,var(--amber),transparent);
-    animation:introRule .8s 1.2s cubic-bezier(.3,1,.3,1) both;}
-  @keyframes introRule{to{width:200px;}}
-  .introsub{margin-top:0;font-size:10.5px;font-weight:700;letter-spacing:.42em;
-    text-indent:.42em;color:var(--sub);animation:introSub .8s 1.55s ease both;}
-  @keyframes introSub{from{opacity:0;transform:translateY(12px);letter-spacing:.7em;}
-    to{opacity:.95;transform:none;letter-spacing:.42em;}}
-  .introbox::after{content:"";position:absolute;inset:-30px -60px;pointer-events:none;
-    background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.14) 50%,transparent 62%);
-    transform:translateX(-130%);animation:introSheen 1.1s 1.7s ease-out both;}
-  @keyframes introSheen{to{transform:translateX(130%);}}
-  @media(prefers-reduced-motion:reduce){#intro{display:none;}}
-  /* 커튼이 걷힐 때까지 본문 등장 애니메이션 대기 */
-  .tabpane.hold,.tabpane.hold *{animation-play-state:paused!important;}
   /* ===== 공유 시트 ===== */
   #sharewrap{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;}
   .sharebd{position:absolute;inset:0;background:rgba(6,5,7,.72);
@@ -299,37 +270,15 @@
   @media(prefers-reduced-motion:reduce){
     .brandlock,.langwrap{transform:none!important;opacity:1!important;}
   }
-  /* ===== 스크롤 진입 연출 (양방향) ===== */
-  .rv{opacity:0;animation:none!important;will-change:transform,opacity;
-    transform:perspective(1100px) translateY(96px) translateZ(-90px) rotateX(15deg) scale(.86);
-    filter:blur(5px);
-    transition:opacity .5s ease,
-               transform 1.02s cubic-bezier(.16,1.06,.24,1),
-               filter .55s ease;}
-  /* 위쪽으로 벗어난 요소는 위에서 젖혀지며 내려온다 */
-  .rv.fromtop{transform:perspective(1100px) translateY(-96px) translateZ(-90px) rotateX(-15deg) scale(.86);}
-  .rv.in{opacity:1;transform:none;filter:blur(0);}
-  /* 통계 카드는 더 깊은 곳에서 튀어나옴 */
-  .rv.stat{transform:perspective(900px) translateY(70px) translateZ(-140px) rotateX(20deg) scale(.72);}
-  .rv.stat.fromtop{transform:perspective(900px) translateY(-70px) translateZ(-140px) rotateX(-20deg) scale(.72);}
-  .rv.stat.in{transform:none;}
-  .stats .stat.rv:nth-child(2){transition-delay:.09s;}
-  .stats .stat.rv:nth-child(3){transition-delay:.18s;}
-  .stats .stat.rv:nth-child(4){transition-delay:.27s;}
-  /* 그리드 카드는 열 순서대로 시차를 두고 반응 */
-  .beans .bean.rv:nth-child(2n){transition-delay:.1s;}
-  .beans .bean.rv:nth-child(3n){transition-delay:.19s;}
-  /* 랭킹 막대: 화면에 들어올 때 0에서 자라남 */
   .barfill{width:var(--w,0);transition:width .95s cubic-bezier(.2,.9,.25,1);}
-  .rv:not(.in) .barfill{width:0;transition:none;}
+
   /* 지도: 국가가 순차적으로 떠오름 */
-  .rv .mapc{opacity:0;transform:translateY(10px);
-    transition:opacity .5s cubic-bezier(.2,1.1,.3,1),transform .6s cubic-bezier(.2,1.1,.3,1);}
-  .rv.in .mapc{opacity:1;transform:none;}
+
+
   /* 원산지 마커가 하나씩 톡톡 떠오름 */
   .mapin{transform-box:fill-box;transform-origin:center;
     animation:mapPop .6s cubic-bezier(.2,1.6,.35,1) both;animation-delay:var(--d,0ms);}
-  .rv:not(.in) .mapin{animation:none;opacity:0;}
+
   @keyframes mapPop{0%{opacity:0;transform:scale(.3);}70%{opacity:1;transform:scale(1.12);}100%{opacity:1;transform:scale(1);}}
   /* 투표 숫자 롤업 */
   .vcount{display:inline-block;}
@@ -558,11 +507,8 @@
     .bulkhead{display:none;}
   }
   /* 맨 위로 */
-  #topBtn{position:fixed;right:16px;bottom:16px;z-index:60;width:46px;height:46px;
-    border-radius:50%;background:var(--walnut);color:var(--ink);font-size:20px;
-    border:1px solid var(--walnutLt);box-shadow:0 4px 14px rgba(0,0,0,.5);
-    display:none;align-items:center;justify-content:center;}
-  #topBtn.show{display:flex;}
+
+
 
 /* Readability edition: preserve original section order and functionality. */
 :root{--ink:#faf7f0;--sub:#c5beb5;--metalDark:#b9b1a8;--metalFaint:#a59e95;--border:#48403b;--amber:#e7b477}
@@ -583,7 +529,7 @@ header{padding:24px}.hdrow{gap:20px}.wordmark{height:30px;margin-bottom:14px}.ey
 label.fl{font-size:14px;line-height:1.5;margin-bottom:6px}.fi,input.fi,select.fi,textarea.fi{font-size:16px!important;min-height:48px;line-height:1.5}.btn,.notebtn,.saletoggle{font-size:14px;min-height:44px;line-height:1.5}.icobtn,.stepbtn{min-width:44px;min-height:44px}.grid2{gap:14px}.grid2>div{min-width:0}.reqitem{font-size:14px;line-height:1.7}.reqitem .dt{font-size:13px}.bulkrow input{font-size:16px;min-height:44px}.bulkrow .konm{font-size:14px}.pre{font-size:13px}.err,.fbwarn{font-size:14px}
 .sharesheet{max-height:90dvh;overflow:auto}.sharehd b{font-size:18px}.sharex{width:44px;height:44px}.sharescan{font-size:15px;line-height:1.7}.shareurl{font-size:13px;line-height:1.6}.sharebtn{min-height:48px;font-size:16px}#toast{font-size:14px;line-height:1.6}
 /* Never blur or hide reading content during scroll. */
-.rv,.rv.stat,.rv.fromtop,.rv.in,.mapc,.mapin{opacity:1!important;transform:none!important;filter:none!important}.rv .barfill{width:var(--w)!important}.tabpane.anim,.tabpane.anim *,.boot *{animation:none!important;filter:none!important}.nowdot{animation:none}.heartfly,.vring{display:none!important}
+.tabpane.anim,.tabpane.anim *,.boot *{animation:none!important;filter:none!important}.nowdot{animation:none}.heartfly,.vring{display:none!important}
 @media(hover:hover){.bean:hover{transform:translateY(-2px);box-shadow:none}}
 @media(max-width:767px){
  .wrap{padding:14px max(14px,env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
@@ -592,9 +538,9 @@ label.fl{font-size:14px;line-height:1.5;margin-bottom:6px}.fi,input.fi,select.fi
  .tabbar{margin-left:0;margin-right:0;padding-left:0;padding-right:0;gap:6px}.tabgroup{flex:1;min-width:0;padding:3px;gap:2px}.tab{flex:1;min-width:0;font-size:14px;line-height:1.4;padding:8px 5px;overflow-wrap:anywhere}.tab .ticon,.tabbadge{display:none}.sharetop{margin-left:0;padding:0 9px}.admgear{width:44px;flex-shrink:0}
  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:14px}.stat .lbl{font-size:14px}.stat .val{font-size:24px}.stat .val span{font-size:16px!important}.stat .sub{font-size:13px}
  .votehint{padding:14px;gap:10px}.votehint b{font-size:15px}.votehint span{font-size:14px}.nowsec{padding:12px}.nowsec>h2.sec{font-size:19px;margin-bottom:14px!important}.beans{grid-template-columns:minmax(0,1fr);gap:13px}.bean{padding:16px;gap:12px}
- .bean>div:first-child{flex-wrap:wrap;gap:12px!important}.bean>div:first-child>.brandrow{flex:1 1 100%}.bean>div:first-child>div:last-child{flex-direction:row!important;align-items:center!important;flex-wrap:wrap;gap:6px!important}.blogo{width:48px;height:48px;border-radius:8px}.brandrow{gap:11px}.bean .brand{font-size:14px}.bean .bname{font-size:21px;line-height:1.45}.origin{font-size:14px}.subnote{font-size:16px;line-height:1.75}.ntag{font-size:14px;padding:5px 8px}.beanfoot{padding-top:14px}.price{font-size:22px}.votebtn{min-height:46px;padding:10px 12px}
+ .blogo{width:48px;height:48px;border-radius:8px}.brandrow{gap:11px}.bean .brand{font-size:14px}.bean .bname{font-size:21px;line-height:1.45}.origin{font-size:14px}.subnote{font-size:16px;line-height:1.75}.ntag{font-size:14px;padding:5px 8px}.beanfoot{padding-top:14px}.price{font-size:22px}.votebtn{min-height:46px;padding:10px 12px}
  .sortbar.swipe{flex-wrap:wrap;overflow:visible;mask-image:none;-webkit-mask-image:none;gap:6px}.sortbar.swipe>span{font-size:14px!important;flex-basis:100%}.sortbar.swipe .sel{flex-basis:100%;width:100%;margin-left:0!important}.chip{padding:8px 10px}.barrow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.barlabel{width:auto;text-align:left;font-size:14px}.grid2{grid-template-columns:minmax(0,1fr)}.bulkrow{grid-template-columns:minmax(0,1fr)}.bulkhead{display:none}.reqcard>.btn{width:100%}
- .sharesheet{width:100%;max-height:calc(100dvh - 20px);padding:20px 18px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain}.qrbox{width:clamp(150px,46vw,190px)}#topBtn{display:none!important}
+ .sharesheet{width:100%;max-height:calc(100dvh - 20px);padding:20px 18px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain}.qrbox{width:clamp(150px,46vw,190px)}
 }
 @media(max-width:359px){header{padding:14px}h1{font-size:23px}.tab{font-size:13px}.sharetop{font-size:13px;padding:0 7px}.nowsec{padding:10px}.bean{padding:14px}.bean .bname{font-size:20px}.blogo{width:42px;height:42px}.beanfoot{gap:8px}.votebtn{font-size:13px;padding:10px}.price{font-size:21px}}
 @media(max-width:767px) and (orientation:landscape){.tabbar{position:relative}}
@@ -619,20 +565,47 @@ header::after,.boot header::after{content:"";display:block!important;position:ab
 @media(max-width:767px){header::before{width:95%}.bean{transition:box-shadow .2s,border-color .2s}.heartfly{font-size:16px!important}.vring{width:40px;height:40px}}
 @media(prefers-reduced-motion:reduce){header::before,header::after,.boot header::after,.sharetop,.votebtn.pop .vheart{animation:none!important}.heartfly,.vring,.plus1{display:none!important}*,*::before,*::after{transition:none!important}.bean:hover,.chip:hover,.langbtn:hover{transform:none}}
 
-</style>
 
-<div id="intro" aria-hidden="true">
-  <div class="introbox">
-    <div class="introcafe">CAFE</div>
-    <img class="intrologo" src="" alt="Cafe Dennis" />
-    <div class="introrule"></div>
-    <div class="introsub">BEAN CURATION</div>
-  </div>
-</div>
+/* Unified bean browsing layout. */
+.browsecontrols{margin-bottom:14px}
+.browsebar,.availability,.beanmeta,.filterbody{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.browsebar{justify-content:space-between;margin-top:10px}
+.browsebar>.sel{flex:0 1 145px;min-width:0}
+.filterdetails{margin-top:6px}
+summary{cursor:pointer;min-height:44px;padding:10px 0;font-size:14px;color:var(--sub)}
+summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.filterbody{padding-bottom:12px}
+.insights{border-top:1px solid var(--border);margin-top:24px}
+.insightbody{padding-top:12px}
+.brandrow{align-items:center}.brandrow .brand{margin:0}
+.blogo{width:40px;height:40px}.blogo.ph{font-size:20px}
+.bean .bname{font-size:23px;line-height:1.45;width:100%;text-wrap:initial}
+.soldoutbadge{display:inline-flex;padding:5px 8px;border:1px solid #716960;border-radius:999px;color:var(--sub);font-size:14px;line-height:1.5}
+.nowbadge,.procpill{font-size:14px}
+.pricecaption{display:block;font-size:13px;color:var(--sub);margin-bottom:2px}
+.bean.dim{border-style:dashed}
+.tab{justify-content:center}
+@media(max-width:767px){
+ header{padding:14px;margin-bottom:8px}.hdrow{gap:10px}
+ .wordmark{height:22px;margin-bottom:6px}.eyebrow{display:none}
+ h1{font-size:22px}.tagline{font-size:14px;line-height:1.5;margin-top:6px}
+ .langbtn{font-size:13px}
+ .bean .blogo{width:36px;height:36px}.bean .bname{font-size:21px;line-height:1.45}
+ .bean:active{transform:none}
+ .bean,.beans,.bean *{animation:none!important}
+ .bean .heartfly,.bean .vring{display:none!important}
+ #totop{right:12px;bottom:calc(12px + env(safe-area-inset-bottom))}
+ .tabbar{flex-wrap:wrap}.tabgroup{flex:1 1 160px}.tab{word-break:keep-all}
+}
+@media(max-width:359px){.bean .bname{font-size:20px}.browsebar>.sel{flex-basis:100%;width:100%}}
+
+</style>
+</head>
+<body>
+
 <div class="wrap" id="app"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <button id="totop" onclick="window.toTop()">&#9650;</button>
-<button id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="top">&#8679;</button>
 
 <script>
 /* ============================================================
@@ -648,7 +621,7 @@ var FIREBASE_CONFIG = {
   appId: "1:991657342643:web:4756afb454cd9b5601e2c6",
   measurementId: "G-TRJ2DHXE8R"
 };
-var ADMIN_PW = "dennis";
+// Administrator permissions are verified against Firebase /admins/{uid}.
 var NOW_PREVIEW = 6;   /* 판매중 섹션 기본 표시 개수 */
 var LIST_STEP = 12;    /* 전체 목록 "더 보기" 단위 */
 
@@ -1399,7 +1372,7 @@ var state={
   beans:null, brandLogos:{}, brandNamesEn:{}, requests:[],
   lang:detectLang(),
   myVotes:JSON.parse(localStorage.getItem("cdn-myvotes")||"[]"),
-  tab:"dash", _tabAnim:true, _boot:true, sortKey:"votes", countryFilter:"", processFilter:"", saleFilter:false, myFilter:false, searchQ:"",
+  tab:"dash", _tabAnim:true, _boot:true, sortKey:"votes", countryFilter:"", processFilter:"", saleFilter:true, myFilter:false, searchQ:"",
   nowExpand:false, listLimit:LIST_STEP, adminQ:"",
   authed:false, editId:null,
   form:{brand:"",name:"",nameEn:"",country:COUNTRIES[0].id,process:"Washed",notes:[],subnotes:"",subnotesEn:"",price:""},
@@ -1407,6 +1380,8 @@ var state={
   bulkEdits:{},
   patText:"", patMsg:"", fbReady:false
 };
+var BROWSE_LABELS={"ko": ["오늘의 원두", "원두 요청", "판매 중", "전체 기록", "판매 종료", "판매 당시", "통계 · 인기 순위 · 산지 지도", "정렬", "상세 필터"], "en": ["Today's beans", "Request beans", "Available", "All beans", "Unavailable", "Last price", "Stats · ranking · origins", "Sort", "More filters"], "zh": ["今日咖啡豆", "咖啡豆请求", "在售", "全部记录", "已停售", "停售前价格", "统计 · 排名 · 产地", "排序", "更多筛选"], "th": ["เมล็ดกาแฟวันนี้", "ขอเมล็ดกาแฟ", "มีจำหน่าย", "ทั้งหมด", "เลิกจำหน่าย", "ราคาล่าสุด", "สถิติ · อันดับ · แหล่งปลูก", "เรียงตาม", "ตัวกรองเพิ่มเติม"]};
+Object.keys(BROWSE_LABELS).forEach(function(l){var a=BROWSE_LABELS[l];["tabDash","tabReq","availableLabel","archiveLabel","soldOutLabel","lastPriceLabel","insightsLabel","sortLabel","moreFiltersLabel"].forEach(function(k,i){T[l][k]=a[i];});});
 function t(k){return (T[state.lang]&&T[state.lang][k])||T.ko[k]||k;}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function fmtPrice(n){return state.lang==="ko"?(n||0).toLocaleString()+"원":"₩"+(n||0).toLocaleString();}
@@ -1438,6 +1413,36 @@ function flash(msg){
    Firebase
    ============================================================ */
 var beansRef=null, logosRef=null, reqRef=null, brandEnRef=null;
+var adminRoleRef=null, authGeneration=0, beanKeys={};
+function requireAdmin(){
+  if(!state.authed){flash("관리자 로그인이 필요합니다.");return false;}
+  return true;
+}
+function authError(message){
+  var el=document.getElementById("pwErr");
+  if(el){el.textContent=message;el.classList.remove("hidden");}
+}
+function initAdminAuth(){
+  if(typeof firebase.auth!=="function")return;
+  firebase.auth().onAuthStateChanged(function(user){
+    var generation=++authGeneration;
+    if(adminRoleRef){adminRoleRef.off();adminRoleRef=null;}
+    state.authed=false;
+    render();
+    if(!user)return;
+    adminRoleRef=firebase.database().ref("admins").child(user.uid);
+    adminRoleRef.on("value",function(snap){
+      if(generation!==authGeneration)return;
+      state.authed=snap.val()===true;
+      render();
+      if(!state.authed)authError("이 계정에 관리자 권한이 없습니다. Firebase 관리자 설정을 확인해 주세요.");
+    },function(){
+      if(generation!==authGeneration)return;
+      state.authed=false;render();
+      authError("관리자 권한을 확인하지 못했습니다. Firebase 접근 규칙을 확인해 주세요.");
+    });
+  });
+}
 function initFirebase(){
   var cfg=FIREBASE_CONFIG;
   if(typeof firebase==="undefined"){
@@ -1450,6 +1455,7 @@ function initFirebase(){
   }
   try{
     firebase.initializeApp(cfg);
+    initAdminAuth();
     var root=firebase.database().ref("cafeDennis");
     beansRef=root.child("beans");
     logosRef=root.child("brandLogos");
@@ -1457,6 +1463,8 @@ function initFirebase(){
     reqRef=root.child("requests");
     state.fbReady=true;
     beansRef.on("value",function(snap){
+      beanKeys={};
+      snap.forEach(function(child){var b=child.val();if(b&&b.id)beanKeys[b.id]=child.key;});
       var v=snap.val();
       if(v&&Object.prototype.toString.call(v)==="[object Array]"){state.beans=v.filter(Boolean);}
       else if(v&&typeof v==="object"){
@@ -1493,6 +1501,7 @@ function loadLocal(){
   render();
 }
 function saveBeans(next){
+  if(!requireAdmin())return;
   var clean=(next||[]).filter(Boolean).slice();
   state.beans=clean;
   if(state.fbReady&&beansRef){
@@ -1502,16 +1511,19 @@ function saveBeans(next){
   }
 }
 function saveLogos(next){
+  if(!requireAdmin())return;
   state.brandLogos=next;
   if(state.fbReady&&logosRef){logosRef.set(next).catch(function(e){console.error(e);});}
   else{localStorage.setItem("cdn-logos",JSON.stringify(next));render();}
 }
 function saveBrandEn(next){
+  if(!requireAdmin())return;
   state.brandNamesEn=next;
   if(state.fbReady&&brandEnRef){brandEnRef.set(next).catch(function(e){console.error(e);});}
   else{localStorage.setItem("cdn-branden",JSON.stringify(next));render();}
 }
 function saveRequests(next){
+  if(!requireAdmin())return;
   var clean=(next||[]).filter(Boolean).slice();
   state.requests=clean;
   if(state.fbReady&&reqRef){
@@ -1679,7 +1691,7 @@ function beanCardHtml(b,l,medal){
   var logo=state.brandLogos[b.brand];
   var logoHtml=logo?'<img class="blogo" src="'+logo+'" alt="'+esc(b.brand)+'"/>':'<div class="blogo ph">&#9749;</div>';
   var onSale=isOnSale(b);
-  var badge=onSale?'<span class="nowbadge"><span class="nowdot"></span>'+esc(t("nowBadge"))+'</span>':"";
+  var badge=onSale?'<span class="nowbadge">'+esc(t("availableLabel"))+'</span>':'<span class="soldoutbadge">'+esc(t("soldOutLabel"))+'</span>';
   var sub=subnoteText(b,l);
   var medalHtml=medal?'<span class="medal">'+medal+'</span> ':"";
   var notesHtml="",i;
@@ -1689,16 +1701,14 @@ function beanCardHtml(b,l,medal){
     notesHtml+='<span class="ntag" style="background:'+NOTE_COLOR[n]+'26;color:'+NOTE_COLOR[n]+';border:1px solid '+NOTE_COLOR[n]+'55">'+esc(noteLabel(n,l))+'</span>';
   }
   var h='<div class="bean'+(onSale?"":" dim")+'" data-id="'+esc(b.id)+'">'+
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
     '<div class="brandrow">'+logoHtml+
-    '<div><div class="brand">'+esc(brandName(b.brand,l))+'</div>'+
-    '<div class="bname">'+medalHtml+esc(beanName(b,l))+'</div></div></div>'+
-    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+
-    badge+'<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div></div>'+
+    '<div class="brand">'+esc(brandName(b.brand,l))+'</div></div>'+
+    '<h3 class="bname">'+medalHtml+esc(beanName(b,l))+'</h3>'+
+    '<div class="beanmeta">'+badge+'<span class="procpill">'+esc(procLabel(b.process,l))+'</span></div>'+
     '<div class="origin">&#127757; '+esc(countryName(b.country,l))+'</div>'+
     '<div class="notetags">'+notesHtml+'</div>'+
     (sub?'<div class="subnote">&#8220;'+esc(sub)+'&#8221;</div>':"")+
-    '<div class="beanfoot"><span class="price">'+esc(fmtPrice(b.price))+'</span>'+
+    '<div class="beanfoot"><div>'+(onSale?'':'<span class="pricecaption">'+esc(t('lastPriceLabel'))+'</span>')+'<span class="price">'+esc(fmtPrice(b.price))+'</span></div>'+
     '<button class="votebtn'+(voted?" voted":"")+'" data-bid="'+b.id+'" aria-pressed="'+(voted?"true":"false")+'"'+
     ' aria-label="'+esc(t("voteBtn"))+': '+esc(beanName(b,l))+'" onclick="window.vote(\''+b.id+'\')">'+
     '<span class="vheart" aria-hidden="true">'+(voted?"&#10084;":"&#9825;")+'</span> '+
@@ -1722,51 +1732,26 @@ function renderDash(){
   var topVal=top?'<span style="font-size:15px">'+esc(beanName(top,l))+'</span>':"-";
 
   /* 투표 방법 안내 배너 — 첫 투표 전에는 크게, 투표 후에는 슬림하게 */
-  var h;
+  var secondary;
   if(state.myVotes.length){
-    h='<div class="votehint slim"><span class="vhicon">&#10084;</span>'+
+    secondary='<div class="votehint slim"><span class="vhicon">&#10084;</span>'+
       '<span>'+esc(t("voteHintDone"))+'</span></div>';
   }else{
-    h='<div class="votehint"><span class="vhicon">&#10084;</span>'+
+    secondary='<div class="votehint"><span class="vhicon">&#10084;</span>'+
       '<div><b>'+esc(t("voteHintTitle"))+'</b>'+
       '<span>'+esc(t("voteHintDesc"))+'</span></div></div>';
   }
 
-  h+='<div class="stats">'+
+  secondary+='<div class="stats">'+
     statCard("&#9749;",t("statBeans"),beans.length+t("unitKind"),"")+
     statCard("&#9679;",t("statOnSale"),onSaleCnt+t("unitKind"),"")+
     statCard("&#9829;",t("statVotes"),totalVotes,"")+
     statCard("&#127942;",t("statTop"),topVal,top?esc(brandName(top.brand,l))+" &#183; &#9829;"+(top.votes||0):"")+
     '</div>';
 
-  /* 판매중 섹션 (인기순 + TOP3 메달 + 접기) */
-  var onSaleBeans=[];
-  for(i=0;i<beans.length;i++){if(isOnSale(beans[i]))onSaleBeans.push(beans[i]);}
-  onSaleBeans.sort(function(a,b){return (b.votes||0)-(a.votes||0);});
-  h+='<div class="nowsec">'+
-     '<h2 class="sec" style="margin-bottom:10px;color:#5fd17e">&#9749; '+esc(t("nowTitle"))+
-     ' <span style="color:#3f8a52;font-weight:600">('+onSaleBeans.length+t("unitKind")+')</span></h2>';
-  if(!onSaleBeans.length){
-    h+='<p class="muted">'+esc(t("nowEmpty"))+'</p>';
-  }else{
-    var showList=state.nowExpand?onSaleBeans:onSaleBeans.slice(0,NOW_PREVIEW);
-    h+='<div class="beans">';
-    var medals=["&#129351;","&#129352;","&#129353;"];
-    for(i=0;i<showList.length;i++){
-      h+=beanCardHtml(showList[i],l,i<3?medals[i]:"");
-    }
-    h+='</div>';
-    if(onSaleBeans.length>NOW_PREVIEW){
-      h+='<button class="morebtn green" onclick="window.toggleNowExpand()">'+
-         (state.nowExpand?("&#9650; "+esc(t("nowLess"))):("&#9660; "+esc(t("nowMore"))+" ("+onSaleBeans.length+t("unitKind")+")"))+
-         '</button>';
-    }
-  }
-  h+='</div>';
+  var h="";
 
-  h+="<!--SECTOP-->";        /* 판매중 섹션 다음에 랭킹 차트 · 지도 */
-
-  /* 랭킹 차트 · 지도 — 판매중 섹션 아래(SECTOP 자리)에 배치 */
+  /* Secondary statistics and origin map, below the unified list. */
   var secTail="";
   var cd=sorted.slice(0,8);
   var max=1;
@@ -1798,24 +1783,27 @@ function renderDash(){
      '</div><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div>'+
      '<p class="muted" style="margin-top:8px">'+esc(t("mapHint"))+'</p></div>';
 
-  /* 검색 + 정렬 */
+  /* Search and availability apply to the same list. */
+  h+='<section class="browsecontrols" aria-label="'+esc(t("searchPh"))+'">'+
+    '<div class="searchbox">&#128269;<input type="search" class="dashsearch" value="'+esc(state.searchQ)+'" placeholder="'+esc(t("searchPh"))+'" aria-label="'+esc(t("searchPh"))+'" oncompositionstart="window._searchComposing=true" oncompositionend="window._searchComposing=false;window.setSearch(this.value)" oninput="window.setSearch(this.value)"/></div>'+
+    '<div class="browsebar"><div class="availability">'+
+    '<button class="chip'+(state.saleFilter?' green':'')+'" aria-pressed="'+state.saleFilter+'" onclick="window.setAvailability(true)">'+esc(t("availableLabel"))+'</button>'+
+    '<button class="chip'+(!state.saleFilter?' on':'')+'" aria-pressed="'+(!state.saleFilter)+'" onclick="window.setAvailability(false)">'+esc(t("archiveLabel"))+'</button></div>'+
+    '<select class="sel" aria-label="'+esc(t("sortLabel"))+'" onchange="window.setSort(this.value)">';
   var sorts=[["votes","sVotes"],["brand","sBrand"],["country","sCountry"],["process","sProcess"],["price","sPrice"]];
-  h+='<div class="card" style="padding:14px;margin-bottom:14px"><div class="sortbar">'+
-     '<div class="searchbox">&#128269;<input class="dashsearch" value="'+esc(state.searchQ)+'" placeholder="'+esc(t("searchPh"))+'" aria-label="'+esc(t("searchPh"))+'" oninput="window.setSearch(this.value)"/></div>'+
-     '</div><div class="sortbar swipe" style="margin-top:8px">'+
-     '<span style="font-size:12px;font-weight:700;color:var(--metalDark);margin-right:2px">'+esc(t("filterLabel"))+'</span>';
-  for(i=0;i<sorts.length;i++){
-    h+='<button class="chip'+(state.sortKey===sorts[i][0]?" on":"")+'" onclick="window.setSort(\''+sorts[i][0]+'\')">'+esc(t(sorts[i][1]))+'</button>';
-  }
-  h+='<button class="chip'+(state.saleFilter?" green":"")+'" onclick="window.toggleSaleFilter()">&#9679; '+esc(t("nowFilter"))+'</button>'+
-     (state.myVotes.length?'<button class="chip'+(state.myFilter?" on":"")+'" aria-pressed="'+(state.myFilter?"true":"false")+'" onclick="window.toggleMyFilter()">&#10084; '+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':"")+
-     '<select class="sel" style="margin-left:auto" onchange="window.setProcFilter(this.value)">'+
-     '<option value="">'+esc(t("procAll"))+'</option>';
-  for(i=0;i<PROCESSES.length;i++){
-    h+='<option value="'+PROCESSES[i]+'"'+(state.processFilter===PROCESSES[i]?" selected":"")+'>'+esc(procLabel(PROCESSES[i],l))+'</option>';
-  }
-  h+='</select></div></div>';
+  for(i=0;i<sorts.length;i++)h+='<option value="'+sorts[i][0]+'"'+(state.sortKey===sorts[i][0]?' selected':'')+'>'+esc(t(sorts[i][1]))+'</option>';
+  h+='</select></div><details class="filterdetails"'+(state._filterOpen?' open':'')+' ontoggle="state._filterOpen=this.open"><summary>'+esc(t("moreFiltersLabel"))+'</summary><div class="filterbody">'+
+    '<select class="sel" aria-label="'+esc(t("procAll"))+'" onchange="window.setProcFilter(this.value)"><option value="">'+esc(t("procAll"))+'</option>';
+  for(i=0;i<PROCESSES.length;i++)h+='<option value="'+PROCESSES[i]+'"'+(state.processFilter===PROCESSES[i]?' selected':'')+'>'+esc(procLabel(PROCESSES[i],l))+'</option>';
+  h+='</select>'+(state.myVotes.length?'<button class="chip'+(state.myFilter?' on':'')+'" aria-pressed="'+state.myFilter+'" onclick="window.toggleMyFilter()">'+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':'')+'</div></details></section>';
+  h+='<div id="beanresults">'+renderBeanResults()+'</div>';
+  h+='<details class="insights"'+(state._insightsOpen?' open':'')+' ontoggle="state._insightsOpen=this.open"><summary>'+esc(t("insightsLabel"))+'</summary><div class="insightbody">'+secondary+secTail+'</div></details>';
+  h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+'<button class="reqnudgebtn" onclick="window.setTab(\'req\')">'+esc(t("reqNudgeBtn"))+'</button></div>';
+  return h;
+}
 
+function renderBeanResults(){
+  var l=state.lang,beans=state.beans,h="",i;
   /* 전체 목록 (더 보기) */
   var view=[];
   var q=state.searchQ.toLowerCase();
@@ -1847,8 +1835,8 @@ function renderDash(){
   view.sort(cmps[state.sortKey]||cmps.votes);
 
   /* 결과 개수 + 검색·필터 지우기 */
-  var hasFilter=!!(q||state.countryFilter||state.processFilter||state.saleFilter||state.myFilter);
-  h+='<div class="resultbar" id="listtop"><span>'+esc(t("resultCount").replace("{n}",view.length))+'</span>'+
+  var hasFilter=!!(q||state.countryFilter||state.processFilter||state.myFilter);
+  h+='<div class="resultbar" id="listtop"><span role="status" aria-live="polite">'+esc(t("resultCount").replace("{n}",view.length))+'</span>'+
      (hasFilter?'<button class="chip" onclick="window.clearFilters()">&#10005; '+esc(t("clearFilters"))+'</button>':"")+
      '</div>';
 
@@ -1860,13 +1848,7 @@ function renderDash(){
   if(view.length>state.listLimit){
     h+='<button class="morebtn" onclick="window.moreList()">&#9660; '+esc(t("btnMore"))+' (+'+(view.length-state.listLimit)+')</button>';
   }
-  h=h.replace("<!--SECTOP-->",secTail);
 
-  /* 원두 요청 유도 */
-  h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+
-     '<button class="reqnudgebtn" onclick="window.setTab(\'req\')">&#9749; '+esc(t("reqNudgeBtn"))+'</button></div>';
-
-  h+='<div style="height:32px"></div>';
   return h;
 }
 
@@ -1932,15 +1914,18 @@ function renderAdmin(){
     return '<div class="card" style="padding:32px;max-width:360px;margin:0 auto;text-align:center">'+
       '<div style="font-size:28px;margin-bottom:12px">&#128274;</div>'+
       '<h2 style="font-size:15px;font-weight:800;margin-bottom:4px">'+esc(t("adminAuth"))+'</h2>'+
-      '<p class="muted" style="margin-bottom:16px">'+esc(t("adminPwHint"))+'</p>'+
-      '<input class="fi" id="pwInput" type="password" style="text-align:center" '+
+      '<p class="muted" style="margin-bottom:16px">등록된 관리자 이메일과 비밀번호로 로그인하세요.</p>'+
+      '<label for="emailInput">이메일</label>'+
+      '<input class="fi" id="emailInput" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" style="margin:8px 0 12px"/>'+
+      '<label for="pwInput">비밀번호</label>'+
+      '<input class="fi" id="pwInput" type="password" autocomplete="current-password" style="text-align:center" '+
       'onkeydown="if(event.key===\'Enter\')window.tryAuth()"/>'+
       '<div id="pwErr" class="err hidden">'+esc(t("adminPwWrong"))+'</div>'+
       '<button class="btn" style="width:100%;margin-top:12px" onclick="window.tryAuth()">'+esc(t("adminEnter"))+'</button>'+
       '</div>';
   }
 
-  var h="";
+  var h='<button class="btn" style="margin-bottom:16px" onclick="window.logoutAdmin()">관리자 로그아웃</button>';
   if(!state.fbReady)h+='<div class="fbwarn">&#9888; '+esc(t("fbError"))+'</div>';
 
   /* 빠른 이동 바 */
@@ -2324,6 +2309,7 @@ window.setTab=function(v){
 };
 window.setSort=function(v){state.sortKey=v;state.listLimit=LIST_STEP;state._softAnim=true;render();};
 window.setProcFilter=function(v){state.processFilter=v;state.listLimit=LIST_STEP;state._softAnim=true;render();};
+window.setAvailability=function(v){state.saleFilter=v;state.listLimit=LIST_STEP;render();};
 window.toggleSaleFilter=function(){state.saleFilter=!state.saleFilter;state.listLimit=LIST_STEP;state._softAnim=true;render();};
 window.pickCountry=function(id){
   state.countryFilter=state.countryFilter===id?"":id;
@@ -2339,7 +2325,7 @@ window.jumpTo=function(id){
   if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
 };
 window.clearFilters=function(){
-  state.searchQ="";state.countryFilter="";state.processFilter="";state.saleFilter=false;state.myFilter=false;
+  state.searchQ="";state.countryFilter="";state.processFilter="";state.myFilter=false;
   state.listLimit=LIST_STEP;state._softAnim=true;render();
 };
 window.toggleMyFilter=function(){
@@ -2445,32 +2431,7 @@ window.addEventListener("hashchange",function(){
   state.tab=nt;state._tabAnim=true;render();window.scrollTo({top:0});
 });
 
-/* ============================================================
-   오프닝 커튼 — 데이터가 준비되면 걷히며 본문 캐스케이드를 시작시킨다
-   ============================================================ */
-(function(){
-  var iv=document.getElementById("intro");
-  var il=iv&&iv.querySelector(".intrologo");
-  if(il)il.src=LOGO;
-  var t0=Date.now(),MIN=700,MAX=1800;
-  function done(){
-    if(window._introGone)return;
-    window._introGone=true;
-    if(iv){
-      iv.classList.add("out");
-      setTimeout(function(){if(iv.parentNode)iv.parentNode.removeChild(iv);},900);
-    }
-    if(window._bootStart){var f=window._bootStart;window._bootStart=null;f();}
-  }
-  if(!iv){window._introGone=true;return;}
-  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){done();return;}
-  iv.addEventListener("click",done);          /* 탭하면 건너뛰기 */
-  (function tick(){
-    var el=Date.now()-t0;
-    if((state.beans&&el>=MIN)||el>=MAX){done();return;}
-    setTimeout(tick,120);
-  })();
-})();
+window._introGone=true;
 
 /* 스크롤 반응 — 맨 위로 버튼 · 헤더 패럴랙스 · 탭바 그림자 */
 (function(){
@@ -2504,7 +2465,7 @@ function reduceMotion(){
 
 /* 재렌더 직전 카드 위치를 기록 */
 function flipCapture(){
-  if(reduceMotion())return null;
+  if(reduceMotion()||window.innerWidth<768)return null;
   var els=document.querySelectorAll("#app .bean[data-id]"),m={},i;
   if(!els.length)return null;
   for(i=0;i<els.length;i++){
@@ -2516,7 +2477,7 @@ function flipCapture(){
 
 /* 재렌더 후, 자리를 옮긴 카드를 원래 위치에서 새 위치로 미끄러지게 */
 function flipPlay(prev){
-  if(!prev||reduceMotion())return;
+  if(!prev||reduceMotion()||window.innerWidth<768)return;
   var els=document.querySelectorAll("#app .bean[data-id]"),i,moved=[];
   for(i=0;i<els.length;i++){
     var el=els[i],p=prev[(el.closest(".nowsec")?"now:":"all:")+el.getAttribute("data-id")];
@@ -2550,7 +2511,7 @@ function flipPlay(prev){
 var motionSeen=Object.create(null);
 function setupReveal(app){
   if(state._io)state._io.disconnect();
-  if(reduceMotion()||!("IntersectionObserver" in window))return;
+  if(reduceMotion()||window.innerWidth<768||!("IntersectionObserver" in window))return;
   var items=app.querySelectorAll(".bean,.stat,.tabpane>.card,.votehint");
   var io=new IntersectionObserver(function(entries){
     var n=0;
@@ -2579,11 +2540,11 @@ window.setSearch=function(v){
   state.searchQ=v;
   state.listLimit=LIST_STEP;
   clearTimeout(window._searchTm);
+  if(window._searchComposing)return;
   window._searchTm=setTimeout(function(){
-    state._softAnim=true;
-    render();
-    var el=document.querySelector(".dashsearch");
-    if(el){el.focus();var p=el.value.length;try{el.setSelectionRange(p,p);}catch(e){}}
+    if(state.tab!=="dash")return;
+    var results=document.getElementById("beanresults");
+    if(results)results.innerHTML=renderBeanResults();
   },250);
 };
 window.setAdminQ=function(v){
@@ -2595,72 +2556,42 @@ window.setAdminQ=function(v){
     if(el){el.focus();var p=el.value.length;try{el.setSelectionRange(p,p);}catch(e){}}
   },250);
 };
-window.vote=function(id){
-  var voted=state.myVotes.indexOf(id)>=0;
-  var delta=voted?-1:1;
-  var next=[],i;
-  for(i=0;i<state.beans.length;i++){
-    var b=state.beans[i];
-    if(b.id===id){
-      var nb={};var k;for(k in b){if(b.hasOwnProperty(k))nb[k]=b[k];}
-      nb.votes=Math.max(0,(b.votes||0)+delta);
-      next.push(nb);
-    }else next.push(b);
-  }
-  state.beans=next;
-  if(state.fbReady&&beansRef){beansRef.set(next).catch(function(e){console.error(e);});}
-  else{localStorage.setItem("cdn-beans",JSON.stringify(next));}
-  if(voted){state.myVotes.splice(state.myVotes.indexOf(id),1);}
-  else{state.myVotes.push(id);}
-  localStorage.setItem("cdn-myvotes",JSON.stringify(state.myVotes));
-  flash(t(voted?"voteUndo":"voteThanks"));
-  render();
-  /* 진동 피드백 (지원 기기에서만) */
-  if(navigator.vibrate){try{navigator.vibrate(voted?12:[14,26,18]);}catch(e){}}
-  /* 새로 렌더된 버튼에 포커스 복원 + 하트 팝/파티클 */
-  var nb2=document.querySelector('.votebtn[data-bid="'+id+'"]');
-  if(nb2&&nb2.focus){try{nb2.focus({preventScroll:true});}catch(e){}}
-  /* 투표 수 롤업 */
-  var vc=nb2&&nb2.querySelector(".vcount");
-  if(vc){
-    vc.classList.add("roll");
-    setTimeout(function(){vc.classList.remove("roll");},600);
-  }
-  if(!voted){
-    var nb=nb2;
-    if(nb){
-      nb.classList.add("pop");
-      var p1=document.createElement("span");
-      p1.className="plus1";p1.textContent="+1";
-      nb.appendChild(p1);
-      /* 하트 파티클 6개가 사방으로 흩어짐 */
-      var hi;
-      for(hi=0;hi<6;hi++){
-        var hf=document.createElement("span");
-        hf.className="heartfly";hf.textContent="\u2665";
-        var ang=(Math.PI*2*hi)/6+Math.random()*.5;
-        hf.style.setProperty("--dx",Math.round(Math.cos(ang)*(34+Math.random()*26))+"px");
-        hf.style.setProperty("--dy",Math.round(Math.sin(ang)*(28+Math.random()*28)-18)+"px");
-        hf.style.setProperty("--rot",Math.round(Math.random()*180-90)+"deg");
-        hf.style.fontSize=(18+Math.random()*14)+"px";
-        nb.appendChild(hf);
-      }
-      var vr=document.createElement("span");
-      vr.className="vring";nb.appendChild(vr);
-      setTimeout(function(){
-        nb.classList.remove("pop");
-        if(p1.parentNode)p1.parentNode.removeChild(p1);
-        if(vr.parentNode)vr.parentNode.removeChild(vr);
-        var fl=nb.querySelectorAll(".heartfly"),fi;
-        for(fi=0;fi<fl.length;fi++)if(fl[fi].parentNode)fl[fi].parentNode.removeChild(fl[fi]);
-      },1150);
+window.vote=async function(id){
+  if(window._votePending)return;
+  var voted=state.myVotes.indexOf(id)>=0,delta=voted?-1:1;
+  window._votePending=true;
+  try{
+    if(state.fbReady&&beansRef){
+      if(beanKeys[id]===undefined)throw new Error("Bean not available");
+      var result=await beansRef.child(beanKeys[id]).child("votes").transaction(function(count){return Math.max(0,(Number(count)||0)+delta);});
+      if(!result.committed)throw new Error("Vote not saved");
+    }else{
+      state.beans=state.beans.map(function(bean){return bean.id===id?Object.assign({},bean,{votes:Math.max(0,(Number(bean.votes)||0)+delta)}):bean;});
+      localStorage.setItem("cdn-beans",JSON.stringify(state.beans));
     }
-  }
+    if(voted)state.myVotes.splice(state.myVotes.indexOf(id),1);else state.myVotes.push(id);
+    localStorage.setItem("cdn-myvotes",JSON.stringify(state.myVotes));
+    flash(t(voted?"voteUndo":"voteThanks"));render();
+  }catch(error){flash("투표를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");}
+  finally{window._votePending=false;}
 };
-window.tryAuth=function(){
-  var el=document.getElementById("pwInput");
-  if(el&&el.value===ADMIN_PW){state.authed=true;render();}
-  else{var e=document.getElementById("pwErr");if(e)e.classList.remove("hidden");}
+window.tryAuth=async function(){
+  var email=document.getElementById("emailInput"),pw=document.getElementById("pwInput");
+  if(!email||!pw||!email.value.trim()||!pw.value){authError("이메일과 비밀번호를 입력해 주세요.");return;}
+  if(typeof firebase==="undefined"||typeof firebase.auth!=="function"||!firebase.apps.length){authError("로그인 서비스에 연결하지 못했습니다. 새로고침 후 다시 시도해 주세요.");return;}
+  var password=pw.value;pw.value="";
+  try{
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    await firebase.auth().signInWithEmailAndPassword(email.value.trim(),password);
+  }catch(error){
+    authError(error.code==="auth/operation-not-allowed" ? "Firebase에서 이메일/비밀번호 로그인을 활성화해 주세요." : "로그인하지 못했습니다. 계정 정보와 네트워크 연결을 확인해 주세요.");
+  }finally{password="";}
+};
+window.logoutAdmin=function(){
+  ++authGeneration;
+  if(adminRoleRef){adminRoleRef.off();adminRoleRef=null;}
+  state.authed=false;render();
+  if(typeof firebase!=="undefined"&&typeof firebase.auth==="function")firebase.auth().signOut().catch(function(){flash("로그아웃을 완료하지 못했습니다. 브라우저를 닫아 주세요.");});
 };
 window.fForm=function(k,v){state.form[k]=v;};
 window.toggleNote=function(n){
@@ -2762,7 +2693,8 @@ window.runPattern=function(){
 };
 /* 요청 */
 window.rForm=function(k,v){state.reqForm[k]=v;};
-window.submitRequest=function(){
+window.submitRequest=async function(){
+  if(window._requestPending)return;
   var rf=state.reqForm;
   if(!rf.country){flash(t("reqNeedCountry"));return;}
   var last=Number(localStorage.getItem("cdn-lastreq")||"0");
@@ -2774,7 +2706,15 @@ window.submitRequest=function(){
     comment:(rf.comment||"").trim().slice(0,120),
     ts:Date.now()
   };
-  saveRequests(state.requests.concat([rec]));
+  window._requestPending=true;
+  try{
+    if(state.fbReady&&reqRef)await reqRef.push(rec);
+    else{
+      state.requests=state.requests.concat([rec]);
+      localStorage.setItem("cdn-requests",JSON.stringify(state.requests));
+    }
+  }catch(error){flash("요청을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");return;}
+  finally{window._requestPending=false;}
   localStorage.setItem("cdn-lastreq",String(Date.now()));
   state.reqForm={country:"",process:"",brand:"",comment:""};
   flash(t("reqDone"));
@@ -2901,14 +2841,6 @@ window.importJSON=function(e){
   e.target.value="";
 };
 
-/* 맨 위로 버튼 */
-window.addEventListener("scroll",function(){
-  var btn=document.getElementById("topBtn");
-  if(!btn)return;
-  if(window.scrollY>500)btn.classList.add("show");
-  else btn.classList.remove("show");
-});
-
 /* ============================================================
    시작
    ============================================================ */
@@ -2919,3 +2851,4 @@ render();
 
 </body>
 </html>
+
