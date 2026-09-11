@@ -599,6 +599,30 @@ summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 }
 @media(max-width:359px){.bean .bname{font-size:20px}.browsebar>.sel{flex-basis:100%;width:100%}}
 
+/* Origin atlas: luminous copper and teal, with restrained motion. */
+body{background:radial-gradient(ellipse at 8% 5%,#37261d66,transparent 42%),radial-gradient(ellipse at 95% 38%,#123d3a44,transparent 45%),#101113}
+header{border-color:#ad825b88;box-shadow:0 18px 65px #0005,inset 0 1px #efd2a333;background:radial-gradient(ellipse at 85% 0,#267c7040,transparent 65%),linear-gradient(125deg,#34251d,#171a1c 78%)}
+.origin-atlas{position:relative;overflow:hidden;margin:0 0 24px;padding:24px;border:1px solid #b98b5b88;border-radius:22px;background:linear-gradient(125deg,#28221b,#132724 75%,#14201f);box-shadow:0 18px 50px #0004,inset 0 1px #ffe6bf22}
+.atlas-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.atlas-heading h2{font-size:clamp(22px,3vw,30px);margin:4px 0 0;color:#fff4dd}
+.atlas-kicker{font-size:12px;letter-spacing:.18em;font-weight:800;color:#f0c78e}
+.atlas-layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:20px;align-items:center}
+.origin-atlas .map{border-color:#779e8b55;background:#101c1c;border-radius:16px;min-width:0}
+.origin-atlas .map svg{display:block;width:100%;height:auto;max-height:310px}
+.atlas-countries{display:flex;flex-wrap:wrap;gap:8px;align-content:start;max-height:310px;overflow:auto}
+.atlas-country{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:10px 12px;color:#f9eedc;background:#101b1b99;border:1px solid #75998b66;border-radius:12px;text-align:left;font:inherit;font-size:14px;cursor:pointer}
+.atlas-country span{color:#e8bf81;font-weight:800;white-space:nowrap}
+.atlas-country[aria-pressed="true"]{background:#e6b879;color:#181714;border-color:#ffe1b6}
+.atlas-country[aria-pressed="true"] span{color:#44321b}
+.atlas-hint{font-size:14px;line-height:1.65;color:#c5d5cc;margin:14px 0 0}
+.atlas-country:focus-visible,.mapin:focus-visible{outline:3px solid #fff1be;outline-offset:3px}
+.bean{border-color:#8e715b66;background:radial-gradient(ellipse at 100% 0,#7653392b,transparent 70%),linear-gradient(135deg,#262222,#181c1d);box-shadow:0 10px 28px #0003}
+.bean:nth-child(3n+2){border-color:#527f7666;background:radial-gradient(ellipse at 100% 0,#26796c33,transparent 70%),linear-gradient(135deg,#202626,#181c1d)}
+.bean::after{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(180deg,#e7b875,#4f9d89);border-radius:14px 0 0 14px;pointer-events:none}
+.bean .price{color:#f2c68c}.bean .bname{line-height:1.4}.browsecontrols{padding:18px;border:1px solid #b18b5c55;border-radius:18px;background:#211e1caa;margin-bottom:22px}
+@media(hover:hover){.atlas-country:hover{border-color:#e8be84}.bean:hover{border-color:#d5ac78;box-shadow:0 14px 32px #0005}}
+@media(max-width:767px){.origin-atlas{padding:16px;border-radius:18px;margin-bottom:18px}.atlas-layout{grid-template-columns:minmax(0,1fr);gap:12px}.origin-atlas .map svg{min-height:175px;max-height:230px}.atlas-countries{max-height:none;overflow:visible;gap:8px}.atlas-country{width:auto;flex:1 1 130px;font-size:14px}.mapin text{display:none}.atlas-hint{margin-top:12px}.browsecontrols{padding:12px}.atlas-heading h2{font-size:23px}}
+@media(prefers-reduced-motion:reduce){header::before,header::after,.mapin{animation:none!important}.bean,.atlas-country{transition:none!important}}
 </style>
 </head>
 <body>
@@ -1638,7 +1662,7 @@ var CONT={
 function proj(lon,lat){return [(lon+180)*2,(90-lat)*2];}
 function mapSVG(cstats,filter){
   var beltTop=(90-23.5)*2,beltBot=(90+23.5)*2;
-  var s='<svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">';
+  var s='<svg viewBox="0 0 720 360" aria-label="'+esc(t("mapTitle"))+'" xmlns="http://www.w3.org/2000/svg">';
   s+='<defs><linearGradient id="wal" x1="0" y1="0" x2="0" y2="1">'+
      '<stop offset="0%" stop-color="#9a6f4d"/><stop offset="100%" stop-color="#6b4a32"/></linearGradient>'+
      '<radialGradient id="mbg" cx="50%" cy="45%" r="75%">'+
@@ -1666,9 +1690,9 @@ function mapSVG(cstats,filter){
   for(i=0;i<cstats.length;i++){
     var cs=cstats[i];
     var xy2=proj(cs.lon,cs.lat);
-    var r=5+Math.sqrt(cs.votes)*2.1;
+    var r=Math.min(18,5+Math.sqrt(Math.max(0,cs.votes))*2.1);
     var active=filter===cs.id;
-    s+='<g class="mapin" style="cursor:pointer;--d:'+(i*80)+'ms" onclick="window.pickCountry(\''+cs.id+'\')">';
+    s+='<g class="mapin" role="button" tabindex="0" aria-label="'+esc(cs.name)+'" aria-pressed="'+active+'" style="cursor:pointer;--d:'+(i*80)+'ms" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();window.pickCountry(\''+cs.id+'\')}" onclick="window.pickCountry(\''+cs.id+'\')"><title>'+esc(cs.name)+' · '+cs.count+'</title>';
     if(active)s+='<circle cx="'+xy2[0]+'" cy="'+xy2[1]+'" r="'+(r+6)+'" fill="#cf954f" opacity="0.3"/>';
     s+='<circle cx="'+xy2[0]+'" cy="'+xy2[1]+'" r="'+r+'" fill="url(#wal)" stroke="'+(active?"#cf954f":"#bcbfc3")+'" stroke-width="'+(active?2:1.3)+'"/>';
     s+='<text x="'+xy2[0]+'" y="'+(xy2[1]+r+12)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#f4f1ea">'+esc(cs.name)+'</text>';
@@ -1776,12 +1800,18 @@ function renderDash(){
   }
   var cstats=[],k;
   for(k in cm){if(cm.hasOwnProperty(k))cstats.push(cm[k]);}
-  secTail+='<div class="card" style="padding:16px;margin-bottom:16px" id="mapsec">'+
-     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">'+
-     '<h2 class="sec">&#127757; '+esc(t("mapTitle"))+'</h2>'+
+  var atlas='<section class="origin-atlas" id="mapsec" aria-labelledby="atlas-title">'+
+     '<div class="atlas-heading"><div><span class="atlas-kicker">DENNIS · ORIGIN ATLAS</span>'+
+     '<h2 id="atlas-title">'+esc(t("mapTitle"))+'</h2></div>'+
      (state.countryFilter?'<button class="chip on" onclick="window.pickCountry(\''+state.countryFilter+'\')">&#10005; '+esc(countryName(state.countryFilter,l))+' &#183; '+esc(t("mapClear"))+'</button>':"")+
-     '</div><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div>'+
-     '<p class="muted" style="margin-top:8px">'+esc(t("mapHint"))+'</p></div>';
+     '</div><div class="atlas-layout"><div class="map">'+mapSVG(cstats,state.countryFilter)+'</div><div class="atlas-countries">';
+  cstats.sort(function(a,b){return b.count-a.count;});
+  for(i=0;i<cstats.length;i++){
+    var origin=cstats[i];
+    atlas+='<button class="atlas-country" aria-pressed="'+(state.countryFilter===origin.id)+'" onclick="window.pickCountry(\''+origin.id+'\')">'+esc(origin.name)+'<span>'+origin.count+esc(t("unitKind"))+'</span></button>';
+  }
+  atlas+='</div></div><p class="atlas-hint">'+esc(t("archiveLabel"))+' · '+esc(t("mapHint"))+'</p></section>';
+  h+=atlas;
 
   /* Search and availability apply to the same list. */
   h+='<section class="browsecontrols" aria-label="'+esc(t("searchPh"))+'">'+
@@ -1797,7 +1827,7 @@ function renderDash(){
   for(i=0;i<PROCESSES.length;i++)h+='<option value="'+PROCESSES[i]+'"'+(state.processFilter===PROCESSES[i]?' selected':'')+'>'+esc(procLabel(PROCESSES[i],l))+'</option>';
   h+='</select>'+(state.myVotes.length?'<button class="chip'+(state.myFilter?' on':'')+'" aria-pressed="'+state.myFilter+'" onclick="window.toggleMyFilter()">'+esc(t("myVotesChip"))+' ('+state.myVotes.length+')</button>':'')+'</div></details></section>';
   h+='<div id="beanresults">'+renderBeanResults()+'</div>';
-  h+='<details class="insights"'+(state._insightsOpen?' open':'')+' ontoggle="state._insightsOpen=this.open"><summary>'+esc(t("insightsLabel"))+'</summary><div class="insightbody">'+secondary+secTail+'</div></details>';
+  h+='<details class="insights"'+(state._insightsOpen?' open':'')+' ontoggle="state._insightsOpen=this.open"><summary>'+esc(t("rankTitle"))+'</summary><div class="insightbody">'+secondary+secTail+'</div></details>';
   h+='<div class="reqnudge">'+esc(t("reqNudgeQ"))+'<button class="reqnudgebtn" onclick="window.setTab(\'req\')">'+esc(t("reqNudgeBtn"))+'</button></div>';
   return h;
 }
