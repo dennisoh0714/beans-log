@@ -679,6 +679,22 @@ summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 @media(max-width:639px){.explorecontent{padding:0 8px 8px}.explorecontent .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.exploreplus{transition:none}}
 
+
+/* Larger square roastery logos and readable bean names. */
+.bean .roastermark{width:120px;height:120px;flex-basis:120px}
+.bean .roasterhead .brand{flex:1;min-width:0;font-size:19px;line-height:1.5}
+.bean .bname{font-size:2rem;line-height:1.4;font-weight:800;letter-spacing:-.025em;word-break:keep-all;overflow-wrap:anywhere;white-space:normal;height:auto;max-height:none;overflow:visible;-webkit-line-clamp:unset}
+@media(max-width:639px){
+ .bean .roastermark{width:104px;height:104px;flex-basis:104px}
+ .bean .roasterhead .brand{font-size:18px}
+ .bean .bname{font-size:1.75rem;line-height:1.45}
+}
+@media(max-width:359px){
+ .bean .roastermark{width:96px;height:96px;flex-basis:96px}
+ .bean .brandrow.roasterhead{gap:12px}
+ .bean .bname{font-size:1.625rem}
+}
+
 </style>
 </head>
 <body>
